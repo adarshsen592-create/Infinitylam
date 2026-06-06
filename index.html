@@ -4,22 +4,104 @@
     <title>Infinitylam</title>
 
     <style>
-        body {
-            margin: 0;
-            background: white;
-            font-family: Arial, sans-serif;
+        body{
+            margin:0;
+            font-family:Arial, sans-serif;
+            background:white;
+            color:black;
         }
 
-        .logo {
-            width: 220px;
-            margin: 20px;
+        .header{
+            padding:20px;
+            border-bottom:1px solid #ddd;
+        }
+
+        .logo{
+            width:180px;
+        }
+
+        .container{
+            max-width:1000px;
+            margin:auto;
+            padding:40px 20px;
+        }
+
+        h1{
+            font-size:36px;
+        }
+
+        .subtitle{
+            color:#555;
+            margin-bottom:40px;
+        }
+
+        .section{
+            margin-bottom:50px;
+        }
+
+        .research-card{
+            border:1px solid #ddd;
+            padding:20px;
+            margin-top:15px;
+            border-radius:10px;
+        }
+
+        .research-card a{
+            text-decoration:none;
+            color:black;
+            font-weight:bold;
+            font-size:18px;
+        }
+
+        .research-card p{
+            color:#666;
         }
     </style>
 </head>
 
 <body>
 
-    <img src="logo.png" class="logo" alt="Infinitylam Logo">
+<div class="header">
+    <img src="logo.png" class="logo">
+</div>
+
+<div class="container">
+
+    <h1>Infinitylam Research Archive</h1>
+
+    <p class="subtitle">
+        Advanced research on neuroengineering,
+        biological intelligence, TPMS architectures,
+        AGI systems and SPECTRE.
+    </p>
+
+    <div class="section">
+
+        <h2>SPECTRE Research</h2>
+
+        <div class="research-card">
+            <a href="Deep Thinking.txt">Deep Thinking</a>
+            <p>Core SPECTRE concepts and architecture.</p>
+        </div>
+
+        <div class="research-card">
+            <a href="researchdoc.txt">Research Document</a>
+            <p>Main technical framework.</p>
+        </div>
+
+        <div class="research-card">
+            <a href="research2.txt">Research 2</a>
+            <p>Scaling and infrastructure concepts.</p>
+        </div>
+
+        <div class="research-card">
+            <a href="RESEARCH3.txt">Research 3</a>
+            <p>Advanced engineering analysis.</p>
+        </div>
+
+    </div>
+
+</div>
 
 </body>
 </html>
