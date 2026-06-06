@@ -1,0 +1,30 @@
+我需要根据文献制定一个25 L TPMS陀螺体支架的高密度、多轴细胞铺种SOP，并提供可追溯参考。必须通过工具检索所有事实数据：涂层浓度（Laminin-511/PLL）、神经元耐受剪切阈值、旋转式/声学方法的规模和可行性、灌流剪切计算方法（Darcy/孔隙尺度）、初始细胞密度范围、实时监测（阻抗/光学氧）等。接下来先面向关键点进行多源检索，必要时解析网页以确认具体数值与建议。
+在为你制定可执行SOP之前，我将进行针对性的文献检索，以确认以下关键参数的证据来源：
+- Laminin-511 与 Poly-L-Lysine 在水凝胶（含GelMA）上的推荐包被浓度与处理步骤；
+- iPSC来源神经元对流体剪切的耐受范围；组织工程/多孔支架灌流剪切计算方法；
+- 多轴旋转（clinostat/旋转壁面）和超声驻波（声悬浮）在细胞悬浮与均匀布种中的可扩展性与已报道参数；
+- TPMS（Gyroid）支架中流动/剪切分布的研究；
+- 非侵入监测：阻抗谱/EIT与光学氧成像用于生物反应器/3D支架“冷点”检测的可行性与实践参数。
+我会尽量减少工具调用次数，但该任务涉及跨子领域，为确保严谨，需要进行若干次检索和网页核对。接下来开始检索关键文献。目标是为25 L TPMS（Gyroid）支架在闭环灌流生物反应器中实现1×10^12个iPSC来源神经元的均匀铺种，且必须给出有据可依的参数与SOP。关键难点包括：1）表面生物黏附层（LN-511或PLL）在GelMA水凝胶上的包被条件以实现“即接即粘”；2）动态悬浮与均匀分布手段（多轴旋转 vs 超声驻波）的工程可行性与尺度；3）灌流期流量与剪切应力上限，以避免细胞损伤并实现深部通达；4）初始“铺种浆液”的细胞密度，以达到1×10^12目标且避免微通道堵塞；5）实时监测“冷点”。我通过检索厂商技术资料、NASA/RWV旋转生物反应器文献、TPMS流体CFD研究、振荡灌流铺种研究、EIS/EIT与光学氧成像等资料，提炼可操作范围；对无法检索到定量数据的点，明确“Data unavailable”并以方法学给出校准流程。受限于跨尺度及细胞类型差异（骨支架CFD与神经元剪切耐受的差异），建议将关键工艺参数以低剪切为原则自下而上逐步标定，并以EIS/光学氧二维映射实现闭环监测与调整。
+# Design of a high-density multi-axial cell seeding protocol for a 25 L TPMS gyroid scaffold
+## Executive summary
+- Surface functionalization: For GelMA基底的Gyroid支架，使用人源重组Laminin-511（LN-511/LN-511 E8）作为主要包被以促进神经元黏附；BioLamina给出LN类基质推荐包被浓度5–10 μg/mL、或按面积0.5–2 μg/cm²，4–8°C过夜或37°C 2 h，并强调避免干燥；涂层可在2–8°C保存至多4周[^1] [^2]。若需使用聚-L-赖氨酸（PLL），行业常用覆盖量为约2 μg/cm²或10–100 μg/mL范围，但需按细胞类型优化[^5] [^6]。
+- Dynamic seeding: 工程上可扩展的低剪切多轴旋转/旋转壁面（RWV/clinostat）优于超声驻波在25 L级的成熟度与规模可行性。RWV/旋转系统强调无气泡（完全充满）以维持低剪切悬浮环境；报道的旋转速度范围在5–35 rpm（视装置与充填率）[^10]，NASA资料与综述指出其可在低剪切下维持细胞悬浮[^10] [^11]。超声驻波/声悬浮目前多限于芯片或T-flask级规模，文献显示用于胚体或小体积悬浮搅拌，难以直接扩展到25 L均一场[^12] [^13]。
+- Perfusion shear stress envelope: 针对Gyroid-TPMS支架（~80%孔隙率）CFD研究显示平均壁面剪切（WSS）在毫帕级（例如~13.76 mPa）且渗透率约5.36×10^-9 m²；该文亦指出（在骨工程背景）MSC分化常推荐平均WSShttps://biolamina.com/products/biolaminin-511-ln/
+[^2]: Instructions: Coating cell cultureware with Biolaminin substrates, BioLamina (guidance indicating LN matrices 5–10 µg/mL; incubation at +2–8°C overnight or 37°C for shorter time; avoid drying), https://biolamina.com/resources/instructions-for-coating/
+[^3]: Guideline – Hydrogel: How to functionalize hydrogels with full-length Biolaminin, BioLamina, https://biolamina.com/resources/guideline-hydrogel/
+[^4]: Laminin Coating Protocol for Cell Culture, Sigma-Aldrich (general laminin coating guidance), https://www.sigmaaldrich.com/US/en/technical-documents/protocol/cell-culture-and-cell-culture-analysis/3d-cell-culture/laminin-product-protocols
+[^5]: Poly-L-Lysine (PLL) – ScienCell product sheet (recommends ~2 µg/cm² for normal human cell attachment; user optimization required), https://sciencellonline.com/PS/0413.pdf
+[^6]: Poly-L-Lysine coating guidance (typical 10–100 µg/mL range), Sigma/Merck technical pages (e.g., A-005-C), https://www.merckmillipore.com/MY/en/product/Poly-L-Lysine-Solution-0.010-0,MM_NF-A-005-C
+[^7]: Permeability and Fluid Flow-Induced Wall Shear Stress in Bone Scaffolds with TPMS and Lattice Architectures: A CFD Analysis, (HAL Montpellier repository mirror of the study; gyroid ~80% porosity reported permeability ≈5.36×10^-9 m² and average WSS ≈13.76 mPa; recommended average WSS https://hal.umontpellier.fr/hal-02428552v1/file/1-s2.0-S0997754619302213-main.pdf
+[^8]: Oscillating perfusion of cell suspensions through three-dimensional scaffolds enhances cell seeding efficiency and uniformity, Wendt D., Marsano A., Jakob M., Heberer M., Martin I., Biotechnol Bioeng, 2003;84(2):205–214. doi:10.1002/bit.10759, https://pubmed.ncbi.nlm.nih.gov/12966577/
+[^9]: An optimized 3D-printed perfusion bioreactor for homogeneous cell seeding, Scientific Reports, 2021;11: (article id). Notes oscillatory perfusion improves efficiency and homogeneity, https://www.nature.com/articles/s41598-021-01516-8
+[^10]: Rotating Wall Vessel – NASA LSDA hardware record (low-shear culture environment; fully filled vessel; rotation), https://nlsp.nasa.gov/view/lsdapub/lsda_hardware/IDP-LSDA_HARDWARE-0000000000000711
+[^11]: The fluid dynamic and shear environment in the NASA/JSC Rotating-Wall Perfused Vessel bioreactor (NTRS technical report; effects of rotation and perfusion rates on shear), 2000, https://ntrs.nasa.gov/citations/20040131181
+[^12]: Biological Acoustic Levitation and Its Potential Application for Biofabrication (review), Bioengineering, vol.12, issue 5, article 458, https://www.mdpi.com/2306-5354/12/5/458
+[^13]: Acoustic streaming induced by MHz-frequency ultrasound extends to suspension culture (ultrasonic-induced mixing in T-flask scale), The Journal of the Acoustical Society of America, 2021;149(6):4180–(pagination), https://pubs.aip.org/asa/jasa/article/149/6/4180/1059345/Acoustic-streaming-induced-by-MHz-frequency
+[^14]: Impedance Spectroscopy as a Tool for Monitoring Performance in 3D Cell Culture, (Review), 2020, https://pmc.ncbi.nlm.nih.gov/articles/PMC6992543/
+[^15]: Scaffold-based 3-D Cell Culture Imaging Using a Miniature Electrical Impedance Tomography (EIT) Sensor (demonstrates feasibility of EIT for 3D cell culture imaging), University of Edinburgh report, https://www.pure.ed.ac.uk/ws/files/96510833/FINAL_VERSION.pdf
+[^16]: Perfusion culture of cell-seeded 3D scaffolds for tissue engineering (application note; inline optical oxygen sensors in perfusion), PreSens, https://www.presens.de/knowledge/publications/application-note/perfusion-culture-of-cell-seeded-3d-scaffolds-for-tissue-engineering-572
+[^17]: Imaging with planar optodes for investigating spatio-temporal gradients (2D oxygen mapping), PreSens knowledge base, https://www.presens.de/knowledge/basics/detail/imaging-with-planar-optodes-for-investigating-spatio-temporal-gradients-1632
+[^18]: iMatrix-511 Recombinant Laminin E8 Fragments (Laminin-511 E8) – recommended coating 0.1–1.5 µg/cm², try 0.5 µg/cm² first, AMSBIO, https://www.amsbio.com/imatrix-recombinant-laminin-511

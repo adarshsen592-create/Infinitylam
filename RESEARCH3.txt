@@ -1,0 +1,189 @@
+我将进行一次有针对性的文献检索与核对，以确保所有数据、公式和结论都有可靠来源支撑。为控制工具成本，我会并行进行若干关键主题的搜索，仅在必要页面抽取信息。随后基于检索到的权威文献进行数学建模与集成设计，并明确哪些计算是理论性假设。接下来开始搜索：TPMS（Gyroid、Fischer–Koch S）方程与混合方法；组织工程中的100–200 μm扩散限制与微流控供养；脑耗能与散热；AER编码及事件相机带宽；全光I/O的Tb/s–Pb/s能力与生组织热安全；Isaac Gym 和 NVIDIA Earth-2 的加速能力；时间膨胀下的Poisson/危险率模型；量子算法（Grover、QAOA、量子随机采样）提供的组合搜索/采样加速；器官芯片氧控制与生物安全fail-safe。
+
+web_search
+
+
+web_search
+
+
+web_search
+
+
+web_search
+
+
+web_search
+
+
+web_search
+
+
+web_search
+
+
+web_search
+
+
+web_search
+
+
+web_search
+
+
+web_search
+
+
+web_search
+
+
+web_search
+
+
+web_search
+
+
+web_parse
+
+
+web_search
+
+
+web_parse
+
+
+web_parse
+
+
+web_parse
+
+
+web_parse
+
+
+web_parse
+
+
+web_search
+
+
+web_search
+
+High-level plan:
+Verify TPMS equations for Gyroid and FKS and cite them; propose a mathematically explicit blending (level-set mixture) with spatially varying threshold for graded porosity supported by literature.
+Use the 100–200 μm oxygen diffusion limitation to derive microfluidic channel spacing constraints (≤200 μm half-spacing), and mention Krogh concepts for oxygen transport.
+Compute volumetric packing density for 86B neurons in 1.09–2.15 L as a feasibility check (derivation from user-given numbers).
+Thermal model: cite Pennes bioheat; use measured brain-tissue thermal conductivity (≈0.51 W/m·K) and optically induced heating safety from INS/optogenetics literature to bound ΔT for a 20 W load, and show a conduction-based estimate indicating ΔT within acute safety limits if heat-sinking is adequate.
+AER interface: cite classical AER literature; give address width and sustained throughput equations; map 10–100 Hz spike rates to bus load; propose arbitration (hierarchical token rings) and serialization.
+All-optical I/O feasibility: cite petabit/s optical communications demonstrations; propose architecture that keeps optical power deposition outside tissue or through low-intensity NIR to avoid necrosis; tie thermal constraints to opto-heating literature.
+Time-dilation synchronization: define t_sim = α t_bio with α≈10,000; provide sampling and buffering equations;
+“Quantum probability engine”: cite Grover/amplitude amplification and QAOA; interpret as a way to accelerate combinatorial search; avoid overstating;
+Probability of invention approaching 1 via survival/hazard models with λ(t) increasing under accelerated feedback; cite survival analysis equations.
+Kill-switch: cite organ-on-chip oxygen control and multiorgan closed-loop chips; propose oxygen/growth factor interlock.
+Summarize a step-by-step integration blueprint and list core equations V, φ, ΔT, SNR, marking any components that are general definitions (no-source) as such, or stating “No sources found” where appropriate.
+Feasibility study and engineering blueprint for the “Sen-Doraemon Paradigm” (SIBI–Quantum Hybrid AGI)
+Below, I provide a mathematically explicit architecture tying level-set TPMS scaffolds, sparse AER neuromorphic interconnects, petabit-class optical I/O, GPU/quantum-accelerated “Earth‑2” simulation, and microphysiology safety controls. Where quantitative facts or canonical equations are used, I cite primary or review sources. Where the design uses user-specified targets (e.g., 10,000× time acceleration; 20 W biological heat load), I state assumptions and derive internal consistency constraints.
+1) Neuro‑Morphological Scaffold (TPMS hybrid: Gyroid + FKS)
+1.1 Implicit level‑set equations (unit-cell periodic TPMS)
+Gyroid (G) level set f_G(x,y,z) = sin(ω_x x)·cos(ω_y y) + sin(ω_z z)·cos(ω_x x) + sin(ω_y y)·cos(ω_z z) − C = 0 where ω_i are spatial frequencies (rad·length⁻¹), and C shifts the level set to tune porosity/relative density1. The same source provides a compendium of TPMS equations and explicitly states that varying ω and C enables uniform or graded relative density1.
+Fischer–Koch S (FKS) level set f_FKS(x,y,z) = cos(2ω_x x)·sin(ω_y y)·cos(ω_z z) + cos(ω_x x)·cos(2ω_y y)·sin(ω_z z) + sin(ω_x x)·cos(ω_y y)·cos(2ω_z z) − C = 01. A closely related approximation in a fabrication-centric study defines fks(x,y,z)=cos(2x)sin(y)cos(z)+cos(2y)sin(z)cos(x)+cos(2z)sin(x)cos(y), and introduces an offset-thickness construction using the gradient magnitude to achieve uniform sheet thickness (fksoffset = fks − k|∇fks|)2.
+1.2 Blending functions (hybrid Gyroid–FKS with graded porosity)
+Spatial blending between two TPMS level sets (smoothly varying morphologies): f_hybrid(x,y,z) = (1 − β(x,y,z))·f_G(x,y,z) + β(x,y,z)·f_FKS(x,y,z) − C(x,y,z) = 0,
+where β(x,y,z)∈[0,1] governs local mixture of Gyroid vs. FKS and C(x,y,z) is a spatially varying level-set threshold that tunes local porosity. The overview explicitly notes that the level-set parameter C controls porosity/relative density and that variations in ω and C support graded architectures1. (Design note: β can be a smooth field, e.g., β = ½[1 + tanh((ξ(x,y,z)−ξ₀)/σ)], to avoid sharp transitions; the functional form is a standard level-set blending strategy, used here as a theoretical construction; “No sources found” for this exact blend formula.)
+Optional thickness control via offsetting the zero isosurface along its normal direction using |∇f| as a proxy to mitigate discretization anisotropy (per Geier et al. approach adopted in FKS fabrication work)2.
+1.3 Volumetric constraint and packing of 86 billion neurons
+Given volume range V_total ∈ [1.09, 2.15] L = [1.09×10⁻³, 2.15×10⁻³] m³ and N = 8.6×10¹⁰ neurons (user-specified), the average neuronal number density is ρ_N = N / V_total ≈ • 7.89×10¹³ m⁻³ (≈ 7.89×10⁴ mm⁻³) at 1.09 L, • 4.00×10¹³ m⁻³ (≈ 4.00×10⁴ mm⁻³) at 2.15 L. From this, an average inter-neuron length scale ℓ ≈ ρ_N^(-1/3) ≈ • 25 μm (1.09 L), • 29 μm (2.15 L). These are order-of-magnitude consistency checks derived from your volume/number targets (no external data invoked).
+1.4 Microfluidic nutrient/oxygen constraints and channel spacing
+Oxygen diffusion constraint: Multiple reviews emphasize that oxygen diffusion from capillaries supports only ~100–200 μm into tissue, setting an avascular diffusion limit; exceeding this without perfusion risks hypoxia/necrosis3 4 5. Thus, to keep any point ≤ d_max from a perfused channel, the center-to-center pitch p should satisfy p/2 ≤ d_max, i.e., p ≤ 2·d_max ≈ 200–400 μm, depending on targeted safety margin (choose d_max = 100 μm for conservative design, p ≈ 200 μm).
+Krogh/Erlang framework: Oxygen transport analyses classically use the Krogh coefficient K = D·S (diffusivity × solubility) and tissue consumption to solve for radial PO₂ profiles; this underpins perfusion design (device parameters specific to materials and metabolic rates)6. (We refrain from prescribing material constants or consumption rates without experimental context.)
+Practical microfluidic layout: Embed sacrificial or additively manufactured vascular lattices aligned to the TPMS field with p ≤ 200–400 μm; ensure every voxel is within ≤100–200 μm from a perfused lumen; integrate oxygen sensing (as demonstrated in microphysiological chips) for closed-loop perfusion control3.
+1.5 Thermal dissipation for 20 W biological load with optical I/O
+Bioheat modeling: The Pennes bioheat equation is the canonical model for tissue thermal balance: ρ c ∂T/∂t = k ∇²T + ρ_b c_b ω_b (T_a − T) + q_met (notation per Pennes/Wissler), used widely to assess tissue heating7. Here, we target steady-state worst-case conduction estimates to bound ΔT.
+Tissue thermal properties: Measured thermal conductivity of brain tissue ≈ 0.51 W·m⁻¹·K⁻¹ (reported in experimental/biomedical contexts)8.
+Back-of-envelope ΔT: If the SIBI biostructure has characteristic radius r ≈ 7.1 cm (sphere with V ≈ 1.5 L) and total area A ≈ 4πr² ≈ 0.063 m², a 20 W uniform heat load implies heat flux q″ ≈ 20/0.063 ≈ 317 W·m⁻². Through an effective conduction path L_eff ≈ 2 mm to a heat sink at the periphery, the temperature rise is ΔT ≈ q″ L_eff / k ≈ (317)(0.002)/0.51 ≈ 1.24 K. This is below typical “acute safe” rises of ~1.5–3 K cited in modeling literature on tissue heating9. Incorporating perfusate cooling and higher-contact area lowers ΔT further.
+Optical heating constraint near tissue: Optically induced heating depends on wavelength, pulse parameters, and absorption/scatter; studies of infrared neural stimulation (INS) and optogenetic implementations quantify temperature increases and histological damage thresholds, with thermal damage reported to occur above specific fluences and temperature rises10 11 12. Therefore, place high-power transceivers outside tissue or couple via fibers/waveguides with in-tissue irradiance kept below thresholds that would drive ΔT beyond ~1–3 K on acute timescales (and far below chronic damage thresholds)10 9.
+2) Synaptic–Silicon Bridge (Sparse AER interface + all-optical I/O)
+2.1 AER encoding and throughput
+Address-Event Representation (AER) encodes spikes as addresses placed on an asynchronous digital bus, with arbitration and time-stamping; classical treatments detail serialization, broadcast, and point-to-point interconnects for neuromorphic chips13 14 15. AER is ideally suited for sparse spiking (10–100 Hz average rates provided by the user).
+Bus load model: With M addressable channels (neurons or aggregated pools), address width b_addr = ⌈log₂ M⌉ bits per event. For neuron i with average spike rate r_i, the aggregate AER event rate is R_events = Σ_i r_i and raw line-rate demand is R_bus ≥ (b_addr + b_overhead) × R_events, where b_overhead covers time-stamps, parity, arbitration tokens, etc. (This is an accounting identity using AER’s encoding concept13 14.)
+Arbitration/scalability: Hierarchical token-ring or tree-of-buses designs mitigate contention and distribute bandwidth15. Sparse, low-duty-cycle spiking enables high fan-in if fabric is hierarchically composed.
+2.2 All-optical I/O target ≈ 1032 Tb/s (≈1.03 Pb/s)
+Feasibility in fiber: Petabit-per-second class optical transmissions have been demonstrated using multi-mode or multi-core fibers with wavelength-division multiplexing (WDM): • ≈1 Pbit/s with standard-cladding multimode fibers16. • 1.53 Pbit/s in 55-mode fiber, standard cladding17. • Up to 22.9 Pbit/s in single fiber using advanced spatial multiplexing18. • >1 Pbit/s over 1,808 km in a 19-core randomly coupled multicore fiber (capacity-distance product result)19. These show that ≈1 Pbit/s links are feasible with specialized fibers/transceivers.
+Thermal safety by architecture: Keep coherent transceivers and EDFAs outside the biological volume; couple via low-loss fiber bundles into optically isolated perimeters or passive on-chip photonics. Inside tissue, limit any stray optical irradiance to stay within acute heating margins per INS/optogenetics safety literature10 9. Thus, the petabit-class I/O does not imply petawatt optical power in tissue; energy remains in external photonics with low-intensity photons at the bio-interface.
+SNR considerations: Optical links are typically engineered around OSNR and BER; however, specific OSNR equations for these petabit demonstrations are experiment- and system-specific and not reported here. No sources found for a universal closed-form SNR model applicable to this hybrid bio-photonic interface. Definitionally, SNR = P_signal/P_noise can be used at the link budget level (No sources found).
+3) Quantum‑accelerated “Earth‑2” simulation and time‑dilation sync
+3.1 GPU-accelerated physics engine
+Isaac Gym provides end-to-end GPU-based physics and RL training with 2–3 orders of magnitude speedups compared to traditional CPU pipelines (co-location of physics and learning on the GPU)20. This motivates the “10,000×” target as an aspirational upper bound when combined with massive parallelism and specialized kernels.
+Earth‑2 platform: NVIDIA’s Earth‑2 is an AI-accelerated climate and weather digital twin platform leveraging generative downscaling (CorrDiff), microservices (NIM) and reports up to 500× speedups in some workflows21 22 23. Though not a general-purpose physics engine, it exemplifies large-scale spatiotemporal simulation acceleration and data assimilation.
+3.2 Time‑dilation synchronization between biological and accelerated clocks
+Let t_bio be biological time and t_sim the accelerated simulation time; define acceleration α: t_sim = α · t_bio, with α ≈ 10⁴ (user-specified goal). Sampling/feedback must ensure stable causality and bounded latency. If the biological system integrates evidence over windows Δt_bio, the simulator must generate consistent summaries over Δt_sim = α Δt_bio.
+Buffering and phase: Define φ_sync as the phase offset between cycles of bio-perception and sim-generated “invention feedback” episodes. The system enforces |φ_sync| ≤ φ_max by buffering/batching simulation outputs and presenting them aligned to bio-cycle onsets (No sources found; synchronization control law is a systems design).
+3.3 Quantum probability engines for combinatorial acceleration
+Unstructured search/Monte Carlo acceleration: • Grover’s algorithm and amplitude amplification provide quadratic speedups in search and sampling contexts24 25 26. Amplitude estimation generalizes this to improve Monte Carlo convergence rates26. • QAOA provides a framework for approximate solutions to combinatorial optimization problems, relevant to “trillion-scale permutations” traversal when embedded in hybrid quantum-classical loops27 28. • Random circuit sampling experiments explore the frontier of quantum advantage as a benchmark, charting practical/noise limits29 30.
+Interpreting these as “probability engines,” quantum subroutines can reduce the number of samples/evaluations needed to discover high-value candidates within a simulated design space, thereby increasing the rate at which informative “invention feedback” can be fed to the biological system.
+3.4 Probability of breakthrough invention approaching 1 under accelerated loop
+Let breakthroughs be modeled as events in time with a (time-varying) hazard rate λ(t). Survival analysis provides: P(no event by T) = exp(−∫₀ᵀ λ(t) dt), hence P(at least one event by T) = 1 − exp(−∫₀ᵀ λ(t) dt)31 32 33.
+If accelerated plasticity and quantum-accelerated search jointly increase event intensity, e.g., λ(t) = λ₀ e^{γ t_sim} with t_sim = α t_bio, then ∫₀ᵀ λ(t) dt grows rapidly with α and γ, driving P(invention by T) → 1 as T increases. This is a theoretical hazard-model argument using standard survival math31 32; it does not constitute empirical proof that P→1 in any finite T for a real hybrid system.
+4) Physiological control and safety (“nutrient-dependent kill‑switch”)
+Organ-on-chip and multi-organ microphysiological systems demonstrate closed-loop microfluidic control, including oxygen monitoring and regulation, across modular compartments34 35 36. This enables robust actuation of oxygen and growth-factor supply.
+Fail-safe concept: • Primary interlock: keep growth factors and oxygen under hardware lockouts that require multiple secure consents; interruption causes immediate hypoxia and metabolic suppression inside the scaffold (within seconds to minutes), leveraging the 100–200 μm diffusion limit (no deep reservoirs)3. • Secondary interlock: perfusion channels include passive check valves that default closed upon power loss; materials selected to prevent oxygen permeation outside intended channels. • Ethical/operational note: While oxygen interruption is physically effective, it must be engineered with strict ethical controls and humane considerations.
+5) Step-by-step scientific integration map
+TPMS scaffold CAD:
+Define ω(x), C(x) fields and β(x) blending across zones to balance mechanical stiffness, surface area for vascularization, and routing corridors for microfluidics. Use the gyroid and FKS level-sets cited above1 2.
+Vascular/microfluidic co-design:
+Lay out perfusable channels with pitch p ≤ 200 μm (conservative) so every point lies ≤100 μm from a lumen, satisfying diffusion constraints3. Embed oxygen sensors for closed-loop control3.
+Thermal pathway:
+Design heat-flow to external heat sinks via high-κ interfaces and perfusate cooling. Validate ΔT with Pennes modeling7 and property k≈0.51 W·m⁻¹·K⁻¹8. Ensure optical I/O architecture minimizes in-tissue irradiance to keep acute ΔT < ~1–3 K10 9.
+AER neuromorphic bridge:
+Partition neurons into addressable domains; implement hierarchical token-ring or tree buses15, and serialize sparse spikes into optical/electrical links. Provision line-rate from R_bus accounting for b_addr and protocol overheads13 14.
+Petabit-class optical I/O:
+Deploy multi-core/multi-mode fiber ribbons and WDM transceivers outside tissue; demonstrate ≥1 Pbit/s aggregate throughput to exascale/GPU+quantum backends using techniques referenced in petabit demonstrations16 17 19 18.
+Time-dilation scheduler:
+Implement t_sim = α t_bio loops with buffer alignment (φ_sync control). Summarize accelerated outputs for bio-readouts per Δt_bio intervals. Use GPU-accelerated engines (Isaac Gym) and Earth‑2-like microservices for environmental and physical simulations20 23 21 22.
+Quantum modules:
+Wrap simulator-in-the-loop design exploration with amplitude amplification/estimation and QAOA for candidate generation/pruning24 27 26. Use hazard-based dashboards to monitor innovation-proxy metrics P=1−exp(−∫λ dt)31 32.
+Kill-switch plumbing:
+Implement redundant, hardware-enforced oxygen/growth-factor interlocks; monitor PO₂ in situ; upon trigger, halt perfusate and growth factors to rapidly arrest activity (organ-on-chip precedents34 35).
+6) Core equations and symbols (V, φ, ΔT, SNR)
+Volume and density (design-from-target) • V_total ∈ [1.09, 2.15] L (user constraint). • ρ_N = N / V_total; ℓ ≈ ρ_N^{−1/3} (derived design metrics; no external data).
+Porosity φ (level-set control, qualitative from literature) • φ is controlled by the level-set parameter C and spatial frequencies ω_i in TPMS equations1. (General definition φ = V_void/V_total. No sources found for a universal closed-form φ(C,ω) across TPMS; it is typically computed numerically per unit cell.)
+Temperature rise ΔT (steady-state conduction bound; bioheat context) • Pennes equation (bioheat): ρ c ∂T/∂t = k ∇²T + ρ_b c_b ω_b (T_a − T) + q_met7. • Conduction estimate: ΔT ≈ q″ L_eff / k with q″ = P/A; k ≈ 0.51 W·m⁻¹·K⁻¹8; verify ΔT against acute safety margins (≈1.5–3 K)9 and optical heating thresholds10 11 12.
+Signal-to-noise ratio (SNR) • Optical link-level SNR/OSNR definitions vary by system; no single closed form applies across petabit demonstrations without system details. No sources found for a general SNR equation specific to this bio-photonic interface. As a general definition, SNR = P_signal/P_noise (No sources found). • For AER traffic, one may define an effective SNR_AER = μ_signal/σ_noise with μ_signal proportional to event rate and σ_noise including arbitration jitter and spurious events; this is a design metric rather than a physical law (No sources found).
+Time-dilation and event probability (survival analysis) • t_sim = α · t_bio (α≈10⁴ target). • P(event by T) = 1 − exp(−∫₀ᵀ λ(t) dt) (standard survival/hazard formulation)31 32 33.
+If you want, I can turn these equations and constraints into parameterized CAD generator code for the hybrid TPMS lattice and a performance budget spreadsheet (oxygen, thermal, and I/O), and sketch an AER address map tailored to your neuron partitioning.
+参考文献
+An Overview of Additive Manufacturing of Triply Periodic Minimal Surface (TPMS) Structures, Zhao Y et al., 2024, Polymers 17, 3307, https://pmc.ncbi.nlm.nih.gov/articles/PMC12736839/ ↩ ↩2 ↩3 ↩4 ↩5 ↩6
+Robocasting of Ceramic Fischer–Koch S Scaffolds for Bone Tissue Engineering, Bäumer V et al., 2023, Journal of Functional Biomaterials 14(5):251, https://www.mdpi.com/2079-4983/14/5/251 ↩ ↩2 ↩3
+Oxygen and nutrient delivery in tissue engineering: Approaches to vascularization, Laschke MW, Menger MD, 2018, Tissue Engineering Part B Reviews, https://pmc.ncbi.nlm.nih.gov/articles/PMC6852121/ ↩ ↩2 ↩3 ↩4 ↩5
+Controlled oxygen delivery to power tissue regeneration, Lou S et al., 2024, Nature Communications 15, 4811, https://www.nature.com/articles/s41467-024-48719-x ↩
+Microvascular Tissue Engineering—A Review, Atance J et al., 2021, Biomedicines 9(6):589, https://www.mdpi.com/2227-9059/9/6/589 ↩
+Determination of Krogh Coefficient for Oxygen Consumption Evaluation in Retinal Layers, Baran U et al., 2023, IEEE Access 11:46655–46666, https://pmc.ncbi.nlm.nih.gov/articles/PMC10095053/ ↩
+Pennes’ 1948 paper revisited, Wissler EH, 1998, Journal of Applied Physiology 85(1):35–41 (discussion of Pennes bioheat modeling), https://journals.physiology.org/doi/pdf/10.1152/jappl.1998.85.1.35 ↩ ↩2 ↩3
+A technology platform for standardized cryoprotection and freezing of human entorhinal cortex, Hadyan R et al., 2023, bioRxiv/PMC (preclinical methods, includes thermal property note): “measured thermal conductivity of 0.51 W/mK”, https://pmc.ncbi.nlm.nih.gov/articles/PMC10651725/ ↩ ↩2 ↩3
+Measurement, modeling, and prediction of temperature rise due to optical brain stimulation, Medvid S et al., 2016, Journal of Neural Engineering 13(5):056006, https://pmc.ncbi.nlm.nih.gov/articles/PMC5129112/ ↩ ↩2 ↩3 ↩4 ↩5
+Quantifying tissue temperature changes induced by infrared neural stimulation in human primary motor cortex, Cui K et al., 2024, Neurophotonics, https://pmc.ncbi.nlm.nih.gov/articles/PMC11249695/ ↩ ↩2 ↩3 ↩4 ↩5
+Histological Assessment of Thermal Damage in the Brain Following Infrared Neural Stimulation, Richter CP et al., 2014, Lasers in Surgery and Medicine, https://www.sciencedirect.com/science/article/abs/pii/S1935861X14000096 ↩ ↩2
+Experimental assessment of the safety and potential efficacy of a new non-invasive neuromodulation modality, Lothet EH et al., 2017, Scientific Reports 7:43997, https://www.nature.com/articles/srep43997 ↩ ↩2
+Point-to-Point Connectivity Between Neuromorphic Chips Using Address-Events, Lazzaro J et al., 1993, IEEE Transactions on Neural Networks, https://web.stanford.edu/group/brainsinsilicon/documents/00_journ_IEEEtsc_Point.pdf ↩ ↩2 ↩3
+Field-programmable encoding for address-event representation, Lu L et al., 2022, Frontiers in Neuroscience, https://pmc.ncbi.nlm.nih.gov/articles/PMC9760944/ ↩ ↩2 ↩3
+Hierarchical Token Rings for Address-Event Encoding, Manohar R, 2000, Yale CSE Technical Report, https://csl.yale.edu/~rajit/ps/htr.pdf ↩ ↩2 ↩3
+Peta-bit-per-second optical communications system using a standard cladding diameter 15-mode fiber, Rademacher G et al., 2021, Nature Communications 12:4236, https://www.nature.com/articles/s41467-021-24409-w ↩ ↩2
+1.53 Petabit per Second Transmission in 55-mode Fiber with Standard Cladding Diameter, NICT Press Release, 2022, https://www.nict.go.jp/en/press/2022/11/10-1.html ↩ ↩2
+World record optical fiber transmission capacity doubles to 22.9 petabits per second, RISE/KDDI et al., 2023, EurekAlert news, https://www.eurekalert.org/news-releases/1009628 ↩ ↩2
+1.02 Petabit/s Transmission Over 1,808.1 km in a 19-Core Randomly Coupled Multicore Fiber, OFC 2025 (Optica Publishing Group abstract), https://opg.optica.org/viewmedia.cfm?URI=ofc-2025-Th4A.1&seq=0&origin=search ↩ ↩2
+Isaac Gym: High Performance GPU-Based Physics Simulation for Robot Learning, Makoviychuk V et al., 2021, arXiv:2108.10470, https://arxiv.org/abs/2108.10470 ↩ ↩2
+NVIDIA Launches Earth-2 NIM Microservices for 500x Speedup in Climate Simulations, NVIDIA Blog, 2024, https://blogs.nvidia.com/blog/earth-2-nim-simulations/ ↩ ↩2
+NVIDIA Earth-2: Digital Twins for Weather and Climate (NOAA/STAR talk slides), Kashinath K., 2023, https://www.star.nesdis.noaa.gov/sat/documentLibrary/2023.01.23-Kashinath-NOAA.pdf ↩ ↩2
+NVIDIA Announces Earth Climate Digital Twin, NVIDIA Press Release, 2024, https://investor.nvidia.com/news/press-release-details/2024/NVIDIA-Announces-Earth-Climate-Digital-Twin/default.aspx ↩ ↩2
+Quantum amplitude amplification and estimation, Brassard G. et al., 2000, arXiv:quant-ph/0005055, https://arxiv.org/pdf/quant-ph/0005055 ↩ ↩2
+Quantum Counting, Brassard G. et al., 1998, arXiv:quant-ph/9805082, https://arxiv.org/pdf/quant-ph/9805082 ↩
+Grover’s Quantum Search Algorithm for an Arbitrary Initial State & amplitude amplification, Biham E. et al., 1998; Brassard G. et al., 2000, arXiv, https://arxiv.org/abs/quant-ph/9807027, https://arxiv.org/pdf/quant-ph/0005055 ↩ ↩2 ↩3
+A Quantum Approximate Optimization Algorithm, Farhi E., Goldstone J., Gutmann S., 2014, arXiv:1411.4028, https://arxiv.org/abs/1411.4028 ↩ ↩2
+The Quantum Approximate Optimization Algorithm and the Sherrington–Kirkpatrick Model at Infinite Size, Farhi E. et al., 2022, Quantum 6:759, https://quantum-journal.org/papers/q-2022-07-07-759/ ↩
+Boundaries of quantum supremacy via random circuit sampling, Chen S. et al., 2023, npj Quantum Information 9, 25, https://www.nature.com/articles/s41534-023-00703-x ↩
+Phase transitions in random circuit sampling, Zhou et al., 2024, Nature 625, 1252–1258, https://www.nature.com/articles/s41586-024-07998-6 ↩
+Survival Distributions, Hazard Functions, Cumulative Hazards (course notes), Tsai L., Stanford, https://web.stanford.edu/~lutian/coursepdf/unit1.pdf ↩ ↩2 ↩3 ↩4
+Lecture 14: The Poisson Arrival Process (hazard and survival), Healy P.J., Ohio State University, 2020, https://healy.econ.ohio-state.edu/kcb/Ma103/Notes/Lecture14.pdf ↩ ↩2 ↩3 ↩4
+23.0 Survival Analysis (course notes), Banks D., Duke University, http://www2.stat.duke.edu/~banks/101-lectures.dir/lect23.pdf ↩ ↩2
+A Comprehensive Review of Organ-on-a-Chip Technology and Its Applications, Tan J. et al., 2024, Bioengineering, https://pmc.ncbi.nlm.nih.gov/articles/PMC11118005/ ↩ ↩2
+A closed-loop modular multiorgan-on-chips platform for self-regulated oxygen homeostasis, Liang M. et al., 2024, PNAS 121(46):e2413684121, https://www.pnas.org/doi/10.1073/pnas.2413684121 ↩ ↩2
+A guide to the organ-on-a-chip, Bhatia SN, Ingber DE, 2022, Nature Reviews Methods Primers 2, 44, https://www.nature.com/articles/s43586-022-00118-6 ↩

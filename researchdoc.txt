@@ -1,0 +1,371 @@
+We must provide a rigorous, source-backed roadmap across geometry/transport (TPMS), feasibility and volume estimates for 86B neurons, perfusion/oxygen limits, merge frameworks for multiple TPMS, ethical/GMP-scalable iPSC manufacture at a conceptual level (no stepwise procedures), materials (hydrogels and conductive interfaces) with cost-effective alternatives, an asynchronous “time dilation” bridge between biological real time and GPU-accelerated simulation, learning via reward-modulated plasticity with all-optical I/O, and thermal + I/O bottleneck mitigation using microchannel cooling, high-density multiplexing, AER, and optics. All quantitative facts cited to literature. Include formulas and parameterized calculations where appropriate and safe. Use the organoid oxygen diffusion limit (100–200 μm) to constrain scaffold length scales and show that neuron density literature implies ~1–2+ liters of tissue for 86B neurons, before accounting for perfusion void fraction. Emphasize Gyroid’s superior permeability and Fischer–Koch S’s mechanical advantage with minor permeability tradeoff; propose implicit-surface blending with graded porosity referencing implicit modeling literature. For synchronization, leverage event-driven AER and control literature for asynchronous buffering; cite Isaac Gym for 2–3 orders of magnitude acceleration. For learning, cite three-factor (reward-modulated STDP) and dopamine RPE evidence, while acknowledging nuances. For I/O, cite CMOS MEAs, Neuropixels, mesh electronics, all-optical voltage imaging and 2P holographic optogenetics. Avoid step-by-step lab protocols; present high-level GMP automation + QbD principles with references to industrial iPSC scaling. End with specific next-step experiments and modeling tasks.
+SPECTRE: A scalable scientific framework for a 3D biological–silicon hybrid SiBi chip approaching 86 billion neurons
+1) Extreme-scale topology & connectivity with TPMS scaffolds
+1.1 Which TPMS for maximal synaptic density and connectivity under perfusion constraints?
+Transport/perfusion: Comparative studies consistently find Gyroid-based TPMS exhibit the highest permeability at fixed porosity among common TPMS (Gyroid > Schwarz P/D in most cases), improving fluid distribution and reducing flow trapping—key for nutrient/oxygen delivery and waste removal1 2 3. Permeability–porosity mapping further shows geometry matters as much as porosity; Gyroid delivers more uniform streamlines than Schwarz P, which can exhibit flatter flows and larger variability2 3.
+Mechanics vs. permeability trade-offs: Fischer–Koch S (FKS) TPMS demonstrates markedly higher compressive strength (+32%) and energy absorption (+49%) than Gyroid, with only modest permeability loss (~11%), making FKS attractive where structural robustness is paramount and slight transport penalties are acceptable4. FKS also shows favorable elastic symmetry and relatively stable anisotropy with porosity change5.
+Graded/heterogeneous architectures: Graded porosity significantly tunes both permeability and mechanics across TPMS scaffolds, enabling region-specific optimization of flow and stiffness without globally sacrificing one or the other6 7.
+Implication for SPECTRE: Use Gyroid-rich regions where perfusion uniformity and exchange dominate; deploy Fischer–Koch S “ribs/shells” for load-bearing and wiring/cooling manifolds; include Schwarz P where specific flow patterns or mechanical isotropy are needed, managed through graded porosity maps. These design choices are supported by measured permeability differences and mechanical data in TPMS literature1 2 3 4 5 6 7.
+1.2 Is it physically possible to pack ~86 billion human neurons on a chip?
+Neuron number baseline: Modern estimates place the human brain at ~86 billion neurons (with uncertainty bounds), reframing the classic “100 billion” figure8 9 10.
+Neuronal density constraints: Human cortical neuronal density varies by region and method; reported values include ~40,000 neurons/mm^3 in human area 17 (V1) from classic stereology11, and ~79,000 neurons/mm^3 in human V1 from recent quantitative histology12 13. This range captures methodological and regional variability.
+Volume calculation (tissue-only): For N neurons and density ρ_n, V_tissue = N / ρ_n.
+Using ρ_n = 79,000 neurons/mm^3 → V_tissue ≈ 86×10^9 / 7.9×10^4 ≈ 1.09×10^6 mm^3 ≈ 1,090 cm^3 ≈ 1.09 liters (illustrative; derived from12 13).
+Using ρ_n = 40,000 neurons/mm^3 → V_tissue ≈ 2.15×10^6 mm^3 ≈ 2,150 cm^3 ≈ 2.15 liters (derived from11).
+Accounting for perfusion voids: A perfused scaffold has a porosity φ (void fraction for channels). The total chip volume V_chip increases as V_chip = V_tissue / (1 − φ). For example, if φ = 0.5 (50% channel voids), V_chip doubles relative to solid tissue volume. Graded porosity can concentrate voids in service corridors while maintaining high tissue fill locally6.
+Conclusion: From a volumetric standpoint, housing 86B neurons is physically possible in a volume on the order of 1–3+ liters depending on targeted neuronal density and engineered porosity. However, viability, perfusion/diffusion, heat removal, and I/O impose stricter constraints than raw packing alone, as detailed below.
+1.3 Dimensions to avoid necrotic cores and maintain density
+Diffusion limits: Non-luminal organoids (e.g., brain organoids) develop necrotic cores when oxygen diffusion distance to the nearest perfused lumen exceeds ~100–200 μm, a widely noted constraint14 15 16 17.
+Design rule for TPMS perfusion: In a 3D scaffold, ensure the maximum Euclidean distance from any point in parenchyma to the nearest perfused surface is ≤ L_crit (100–200 μm). For periodic structures, this implies:
+Channel spacing s ≤ 2L_crit.
+If the implicit unit cell length parameter is a, and the maximum inscribed sphere radius in the solid domain is r_inscribed(a, porosity), enforce r_inscribed ≤ L_crit to preclude hypoxia.
+Coupling to permeability: Choose architectures (e.g., Gyroid) and graded porosity maps that maintain high permeability and uniform streamline distribution to equalize O_2 delivery1 2 3 6.
+Practical scaling: Meeting r_inscribed ≤ 100–200 μm at liter scales implies a multiscale hierarchy—micro-TPMS for parenchyma (sub-mm period) embedded in meso-scale vascular manifolds (mm–cm), which route flow with low pressure drop.
+These constraints are based on organoid oxygen diffusion analyses and platform designs that emphasize perfusion distances of ~100–200 μm to avoid hypoxic centers14 16 17 18.
+1.4 Mathematical framework to smoothly merge n TPMS shapes
+Implicit modeling: TPMS scaffolds are commonly specified as implicit surfaces f(x,y,z) = 0 (e.g., Gyroid, Schwarz P), with porosity controlled by an isovalue offset; implicit modeling supports variable architectures and graded porosity19 6.
+Composite field blending: Define each TPMS by an implicit field f_i(x) with signed distance-like normalization. Let weights w_i(x) ≥ 0 and ∑_i w_i(x) = 1 encode region assignments (e.g., core vs. shell). Construct a blended field
+F(x) = ∑_i w_i(x) f_i(x) − τ(x),
+where τ(x) sets local isovalue to achieve target porosity. Smoothness of w_i(x) (e.g., C^1 bump functions) yields seamless transitions across interfaces while enabling graded porosity19 6.
+Optimization targets: Multi-objective formulation maximizes neuron capacity (proportional to solid tissue volume fraction in parenchymal regions) while constraining (i) maximal diffusion distance ≤ L_crit, (ii) local intrinsic permeability K(x) ≥ K_min (from empirical/CFD maps of TPMS designs), and (iii) mechanical stiffness within safe ranges. Permeability–porosity relationships for TPMS (including Forchheimer-regime considerations) guide K_min selection1 2 3.
+References show implicit surface design and graded porosity evaluation for TPMS scaffolds, supporting the above blending/optimization strategy19 6 2 3.
+2) Ethical biological sourcing & cost-effective materials
+2.1 Ethical, legal, and scalable sourcing of human neurons (high-level framework)
+Ethical source: Human induced pluripotent stem cells (hiPSCs) from consenting donors under IRB oversight remain the ethical path for generating human neurons at scale, avoiding fetal/embryonic sources. Industrial automation platforms such as StemCellFactory demonstrate automated, high-throughput hiPSC production with quality control20 21 22 23.
+GMP and stirred-tank bioreactors: Controlled stirred-tank bioreactors enable closed, scalable, automated expansion and differentiation, with Quality-by-Design (QbD), maintaining pluripotency and process consistency at scales reaching billions of cells per batch; computational fluid dynamics can guide scale-up to liter-class systems24 25 26 27.
+High-level pipeline (non-operational):
+Donor consent, IRB/GMP documentation and traceability.
+Automated reprogramming and colony isolation (e.g., feeder-free, non-integrating methods) using robotic platforms with in-line monitoring20 23.
+Expansion in controlled stirred-tank bioreactors with low-shear aggregate culture, real-time process analytical technology (PAT), and QbD for comparability across scales24 27.
+Differentiation into neural progenitors and downstream neuronal subtypes in closed systems; CFD-guided transitions from lab-scale to multi-liter with validated hydrodynamics26.
+In-line characterization (flow cytometry, imaging, transcriptomic snapshots) integrated with automated handling20 23.
+Release testing and batch disposition under GMP.
+Techno-economics: Automation can yield measurable economic advantages over manual production for large-scale iPSC pipelines, though per-site optimization is needed21.
+These references substantiate that large-scale, automated, GMP-compatible hiPSC manufacture is feasible conceptually, while avoiding operational step-by-step wet-lab detail20 21 24 26 27.
+2.2 Cost-effective scaffold and interface materials
+Bio-inks and structural hydrogel matrices:
+GelMA/PEGDA hybrids: Tunable mechanics and printability; demonstrated neural compatibility with SH-SY5Y cells and parameterizable crosslinking windows28.
+Cellulose nanofibril (CNF) composites with GelMA/alginate/PEGDA: Improve rheology, fidelity, and stability at low polymer content; show non-cytotoxicity and high viability, offering inexpensive, abundant constituents29 30 31 32.
+Conductive, soft bioelectronic interfaces:
+PEDOT:PSS: High conductivity, mechanical match, and biocompatibility as coatings and hydrogels for neural recording/stimulation; ongoing advances in stability and interfacial engineering33 34 35 36 37.
+MXene hydrogels (e.g., Ti3C2Tx-based): Mixed ion–electron conductivity, strong adhesion, and high conductivity suitable for soft neural interfaces; reviews and demonstrations highlight promise and challenges (notably oxidation stability)38 39 40 41 42.
+These systems avoid reliance on ultra-expensive nanomaterials by emphasizing commodity monomers/polymers (GelMA, PEGDA), cellulose derivatives, and widely available conductive polymers or MXenes, all supported by peer-reviewed performance and biocompatibility data28 29 30 31 32 33 35 38 41.
+3) Hyper-accelerated simulation & “Earth 2” bridge (10,000× speed)
+3.1 Time-dilation architecture between biological real-time and accelerated physics
+Simulator capability: GPU-native physics engines like Isaac Gym integrate simulation and learning on-GPU for 2–3 orders-of-magnitude speedups, enabling extreme parallelism (a necessary condition for 10,000× class acceleration in synthetic worlds)43.
+Event-driven interface: Adopt an Address-Event Representation (AER) for neural I/O, transmitting sparse spikes and neuromodulator “events” with timestamps and addresses to the simulator; scalable variants (hierarchical AER, token-ring arbitration, asynchronous bi-directional AER blocks) are documented for large-scale neuromorphic systems44 45 46 47.
+Asynchronous synchronization and buffering:
+Timestamp every biological event at the acquisition boundary, then ingest into an event buffer with capacity sized to cover worst-case biological burstiness and downstream compute jitter.
+In the simulator, run at accelerated time and consume events by transforming biological timestamps to the simulator clock via a time-dilation map, with buffer-centering and reframing strategies to preserve phase and prevent under/overflow48.
+Use networked control synchronization concepts for delayed/asynchronous measurements to maintain controller state coherence across latency boundaries49 50.
+Exactly-once semantics and back-pressure: Employ monotonic sequence numbers and commit/ack protocols on event batches; if simulator consumption lags (e.g., during peak load), apply back-pressure policies (drop oldest non-critical events first or decimate high-rate channels) rather than allow drift. Reset and recovery procedures can draw from asynchronous control and bittide reframing methods48 49.
+Together, Isaac Gym-class accelerators and AER-style sparse event transport, combined with buffering and reframing from distributed control theory, provide a blueprint for clean time-dilated interfacing without packet loss or crashes43 44 45 46 47 48 49 50.
+3.2 State update alignment
+Biological-to-sim: Biological outputs (spike rasters, analog modulators) are integrated into simulator state via event-driven updates; the simulator runs internal substeps between biological frames, maintaining causal ordering via event timestamps and providing interpolated sensor feedback streams.
+Sim-to-biological: Feedback stimuli (optical/electrical) are scheduled in biological time by a deadline scheduler that translates planned simulator events to real-time outputs; missed deadlines are not delivered (to avoid causality violations) and trigger replay-aware policy adjustments in the sim.
+These patterns generalize event-based control where asynchronous measurements and actions are reconciled in real time via queues, schedulers, and timestamp alignment49 50.
+4) Emergence of “inventions” and AGI learning
+4.1 Reward-modulated plasticity as RL
+Three-factor learning rules: Reinforcement learning can be implemented biologically via reward-modulated STDP with an eligibility trace (pre/post activity as two factors, neuromodulator as third), solving credit assignment with delayed rewards51 52 53.
+Dopamine and RPE: Causal evidence shows cue-evoked dopamine transients act as temporal-difference prediction errors in learning tasks, though nuances remain in different behavioral contexts54 55 56. Closed-loop designs that pair behavioral contingencies with neuromodulatory pulses thus map well to RL principles.
+Design principle: Implement closed-loop neuromodulation (optical/chemical) contingent on performance in the accelerated world to drive reward-modulated synaptic changes. The framework is mechanistically supported by three-factor rule theory and evidence for dopamine RPE signaling51 52 54 55 56.
+4.2 Closed-loop I/O: stimulation and readout at scale
+All-optical electrophysiology: Combine optogenetic actuators with genetically encoded voltage indicators (GEVIs) to deliver stimulation and voltage readout without wired electrodes at cellular resolution; “Optopatch” and successors enable millisecond-scale, cell-specific interrogation in vitro and in vivo57 58 59 60 61.
+2-photon holographic optogenetics: Two-photon holographic stimulation affords sub-ms, cellular, and 3D-precise control deep in tissue, and can be integrated with simultaneous imaging for closed-loop control62 63 64 65.
+These modalities permit high-bandwidth, spatially resolved closed-loop interfacing necessary for learning and task performance in Earth 2, while minimizing the wiring burden57 61 62 65.
+4.3 Task curriculum in the accelerated world
+Event-to-reward map: Define “success” in the simulator (e.g., control tasks, puzzle solving) and convert to reward schedules (e.g., phasic neuromodulatory pulses) with delays managed via eligibility traces52. Vary task structure to encourage abstraction and generalization; adopt model-based tasks to leverage dopamine’s sequence-specific prediction signals and address reported context sensitivities55 56.
+5) The missing links: thermal dissipation & I/O bottleneck
+5.1 Heat removal integrated with TPMS perfusion
+Energy budgets: Signaling dominates energy use in gray matter; updated budgets confirm major ATP costs in synaptic and resting potentials over spikes per se66 67 68. Therefore, any large-scale neural tissue will generate non-trivial heat that must be removed continuously.
+Microchannel cooling: Silicon-integrated microchannel heat sinks can sustain very high heat fluxes; foundational and subsequent work show single- and two-phase microchannel cooling with extremely high heat transfer coefficients and optimized thermal resistance69 70 71 72. Chip-scale integration of microchannel heat sinks and thermal-fluidic I/O has been demonstrated73.
+Coupling to bio-perfusion: For biological limits, prefer single-phase, temperature-controlled perfusate to maintain 37°C and physiological shear; TPMS perfusion architecture should be co-designed with thermal microchannels such that:
+Parenchymal TPMS channels supply oxygen/nutrients and remove metabolic heat locally (meeting ≤ 100–200 μm diffusion distance)14 16,
+Larger silicon microchannels (parallel or tree-shaped networks) embedded in the carrier remove bulk heat with low pumping power70 72.
+Throughput formulae (design, not numerical prescription): For a targeted heat load P and allowed temperature rise ΔT in a coolant with density ρ and specific heat c_p, the required volumetric flow is Q ≥ P/(ρ c_p ΔT). Thermal resistance targets for the silicon sink can be set from R_th ≤ ΔT_max/P, guided by microchannel optimization literature70. These are standard heat-transfer relationships applied to the integrated bio-microfluidic system.
+The literature supports the feasibility of microfluidic heat removal at fluxes well beyond biological needs, provided we respect shear/temperature limits in the living compartments69 70 72 73.
+5.2 I/O without wire explosion: multiplexing and optics
+Electronic multiplexing:
+CMOS MEAs already multiplex tens of thousands of electrodes into 1–2k channels with subcellular resolution, low noise, and stimulation capability74 75 76 77.
+Neuropixels probes integrate on-shank amplification, digitization, and multiplexing to record from hundreds of channels (with thousands of sites) with minimal wiring78 79 80 81.
+AER communication provides sparse, event-driven interconnects with hierarchical routing and token-ring arbitration to maintain throughput and latency without 1:1 wiring44 45 46 47.
+Tissue-like hybrids:
+Mesh electronics achieve tissue-matched, minimally reactive 3D interfaces, with chronic stability and scalable I/O schemes compatible with injection-based deployment82 83 84 [^85] [^86].
+All-optical read/write:
+Optical voltage imaging plus optogenetic stimulation replaces metal wires with photons, easing routing and scaling challenges while offering cell-level addressing57 61 62 65.
+A practical path is hybrid: use all-optical I/O for dense local read/write, mesh/CMOS for ground-truth/low-latency channels, and AER to aggregate events into manageable data streams.
+Concluding recommendations and next steps
+Multiscale TPMS design: Optimize a Gyroid-dominant core blended with FKS structural shells and Schwarz P where needed, using implicit blending with graded porosity fields. Enforce r_inscribed ≤ 100–200 μm everywhere to eliminate hypoxic risk, and validate permeability via CFD calibrated to published TPMS permeability maps1 2 3 6 14 16.
+Volume targets: For 86B neurons, plan for ≥1–2+ liters of parenchymal tissue equivalent based on human cortical neuronal densities, increasing by 1/(1−φ) for perfusion void fraction; iterate with measured densities for the specific neuronal phenotypes achieved in vitro11 12 13.
+Ethical iPSC manufacturing: Implement GMP, automation, and QbD in stirred-tank bioreactors, with in-line monitoring and CFD-guided scale-up; avoid stepwise protocols but establish governance and supply chain for donor cells and manufacturing quality20 21 24 26 27.
+I/O and learning: Prioritize all-optical electrophysiology and 2P holographic optogenetics for dense interaction; integrate a three-factor reinforcement framework with closed-loop dopamine-like neuromodulation and careful task design acknowledging dopamine’s nuanced roles51 52 54 55 57 61 62 65.
+Simulation bridge: Build an AER-based asynchronous interface with timestamped buffers and bittide-style buffer centering; deploy Isaac Gym-class accelerated simulators to achieve target speedups while maintaining exactly-once event semantics43 44 45 46 48 49.
+Thermal management: Co-design perfused TPMS and silicon microchannel heat sinks, using single-phase biocompatible perfusates for cells and separate high-efficiency circuits for carrier cooling; verify thermal resistance and flow targets against microchannel optimization literature69 70 73.
+I can help: (i) set up a CFD–topology optimization loop to co-optimize TPMS geometry for K(x), r_inscribed, and neuron capacity; (ii) design the AER event schema and buffer timing model for the 10,000× bridge; (iii) assemble a materials stack and preliminary techno-economic screening for GelMA–CNF–PEDOT:PSS/MXene composites; and (iv) outline a GMP automation and analytics architecture that remains high-level and compliant.
+参考文献
+On the permeability of TPMS scaffolds, Jorge Santos; Tiago Pires; Bárbara P. Gouveia; André P.G. Castro; Paulo R. Fernandes, 2020, Journal of the Mechanical Behavior of Biomedical Materials, https://doi.org/10.1016/j.jmbbm.2020.103932 ↩ ↩2 ↩3 ↩4 ↩5
+Permeability versus Design in TPMS Scaffolds, Castro; Pires; Santos; Gouveia; Fernandes, 2019, Materials, https://doi.org/10.3390/ma12081313 ↩ ↩2 ↩3 ↩4 ↩5 ↩6 ↩7
+Numerical-experimental analysis of the permeability-porosity relationship in triply periodic minimal surfaces scaffolds, Tiago Pires; Jorge Santos; Rui B. Ruben; Bárbara P. Gouveia; André P.G. Castro; Paulo R. Fernandes, 2021, Journal of Biomechanics, https://doi.org/10.1016/j.jbiomech.2021.110263 ↩ ↩2 ↩3 ↩4 ↩5 ↩6 ↩7
+Comparing ceramic Fischer-Koch-S and gyroid TPMS scaffolds for potential in bone tissue engineering, Vail Baumer; Nelson Isaacson; Shashank Kanakamedala; Duncan McGee; Isabella Kaze; David Prawel, 2024, Frontiers in Bioengineering and Biotechnology, https://doi.org/10.3389/fbioe.2024.1410837 ↩ ↩2
+The anisotropic elastic behavior of the widely-used triply-periodic minimal surface based scaffolds, Yongtao Lu; Wenying Zhao; Zhentao Cui; Hanxing Zhu; Chengwei Wu, 2019, Journal of the Mechanical Behavior of Biomedical Materials, https://doi.org/10.1016/j.jmbbm.2019.07.012 ↩ ↩2
+Fluid Permeability of Graded Porosity Scaffolds Architectured with Minimal Surfaces, Masoud Zhianmanesh; Mostafa Varmazyar; Hossein Montazerian, 2019, ACS Biomaterials Science & Engineering, https://doi.org/10.1021/acsbiomaterials.8b01400 ↩ ↩2 ↩3 ↩4 ↩5 ↩6 ↩7 ↩8
+Minimal surface scaffold designs for tissue engineering, Sebastian C. Kapfer; Stephen T. Hyde; Klaus Mecke; Christoph H. Arns; Gerd E. Schröder-Turk, 2011, Biomaterials, https://doi.org/10.1016/j.biomaterials.2011.06.012 ↩ ↩2
+The remarkable, yet not extraordinary, human brain as a scaled-up primate brain and its associated cost, Suzana Herculano-Houzel, 2012, Proceedings of the National Academy of Sciences, https://doi.org/10.1073/pnas.1201895109 ↩
+The human brain in numbers: a linearly scaled-up primate brain, Suzana Herculano-Houzel, 2009, Frontiers in Human Neuroscience, https://doi.org/10.3389/neuro.09.031.2009 ↩
+Eighty-six billion and counting: do we know the number of neurons in the human brain?, Alain Goriely, 2024, Brain, https://doi.org/10.1093/brain/awae390 ↩
+Comparison of neuronal and glial numerical density in primary and secondary visual cortex of man, G. Leuba; L. J. Garey, 1989, Experimental Brain Research, https://doi.org/10.1007/bf00250564 ↩ ↩2 ↩3
+Neuronal composition of processing modules in human V1: laminar density for neuronal and non-neuronal populations and a comparison with macaque, Virginia Garcia-Marin; Jenna G Kelly; Michael J Hawken, 2024, Cerebral Cortex, https://doi.org/10.1093/cercor/bhad512 ↩ ↩2 ↩3
+Neuronal composition of processing modules in human V1: laminar density for neuronal and non-neuronal populations and a comparison with macaque, Garcia-Marin; Kelly; Hawken, 2023, bioRxiv, https://doi.org/10.1101/2023.05.21.540412 ↩ ↩2 ↩3
+Allometric Scaling of physiologically-relevant organoids, Chiara Magliaro; Andrea Rinaldo; Arti Ahluwalia, 2019, Scientific Reports, https://doi.org/10.1038/s41598-019-48347-2 ↩ ↩2 ↩3 ↩4
+Allometric Scaling of physiologically-relevant organoids, Chiara Magliaro; Andrea Rinaldo; Arti Ahluwalia, 2019, bioRxiv, https://doi.org/10.1101/559682 ↩
+Analytic Models of Oxygen and Nutrient Diffusion, Metabolism Dynamics, and Architecture Optimization in Three-Dimensional Tissue Constructs with Applications and Insights in Cerebral Organoids, Richard J. McMurtrey, 2016, Tissue Engineering Part C: Methods, https://doi.org/10.1089/ten.tec.2015.0375 ↩ ↩2 ↩3 ↩4
+Analytic and Numerical Models of Oxygen and Nutrient Diffusion… in Cerebral Organoids, Richard J. McMurtrey, 2015, arXiv, https://doi.org/10.48550/arXiv.1512.06475 ↩ ↩2
+A platform for modular assembly and feeding of micro-organoids on standard Petri dishes, Federico Nebuloni; Joseph Morgan; Edmond J. Walsh; Peter R. Cook, 2023, Biology Open, https://doi.org/10.1242/bio.059825 ↩
+Porous Scaffold Design Based on Minimal Surfaces: Development and Assessment of Variable Architectures, Rita Ambu; Anna Morabito, 2018, Symmetry, https://doi.org/10.3390/sym10090361 ↩ ↩2 ↩3
+The StemCellFactory: A Modular System Integration for Automated Generation and Expansion of Human Induced Pluripotent Stem Cells, Andreas Elanzew et al., 2020, Frontiers in Bioengineering and Biotechnology, https://doi.org/10.3389/fbioe.2020.580352 ↩ ↩2 ↩3 ↩4 ↩5
+Techno-Economic Analysis of Automated iPSC Production, Bastian Nießing; Raphael Kiesel; Laura Herbst; Robert H. Schmitt, 2021, Processes, https://doi.org/10.3390/pr9020240 ↩ ↩2 ↩3 ↩4
+Automated, high-throughput derivation, characterization and differentiation of induced pluripotent stem cells, Daniel Paull et al., 2015, Nature Methods, https://doi.org/10.1038/nmeth.3507 ↩
+Automated high-content imaging in iPSC-derived neuronal progenitors, Apostolos Papandreou et al., 2023, SLAS DISCOVERY, https://doi.org/10.1016/j.slasd.2022.12.002 ↩ ↩2 ↩3
+Controlled stirred tank bioreactors for large-scale manufacture of human iPSC models for cell therapy, K. Langenberg et al., 2020, Cytotherapy, https://doi.org/10.1016/j.jcyt.2020.03.042 ↩ ↩2 ↩3 ↩4
+HUMAN INDUCED PLURIPOTENT STEM CELLS (HIPSC) AGGREGATES EXPANSION IN STIRRED-TANK BIOREACTORS…, J.L. Escobar Ivirico; M. Sha; S. Selzer, 2024, Cytotherapy, https://doi.org/10.1016/j.jcyt.2024.03.455 ↩
+Computational fluid dynamics modeling… scalable cell therapy manufacturing processes, Mehdi Shafa et al., 2019, Biotechnology and Bioengineering, https://doi.org/10.1002/bit.27159 ↩ ↩2 ↩3 ↩4
+SCALABLE HUMAN IPSC-TO-3D BIOPRINTING PIPELINE…, R. Ladi et al., 2024, Cytotherapy, https://doi.org/10.1016/j.jcyt.2024.03.027 ↩ ↩2 ↩3 ↩4
+Bioprinting of GelMA/PEGDA Hybrid Bioinks for SH-SY5Y Cell Encapsulation…, Hexin Yue et al., 2025, Macromolecular Bioscience, https://doi.org/10.1002/mabi.202400587 ↩ ↩2
+On Low-Concentration Inks Formulated by Nanocellulose Assisted with GelMA…, Wenyang Xu et al., 2019, ACS Applied Materials & Interfaces, https://doi.org/10.1021/acsami.8b21268 ↩ ↩2
+Fiber-Filled Hybrid Hydrogel for Bio-Manufacturing, Ahasan Habib; Bashir Khoda, 2021, Journal of Manufacturing Science and Engineering, https://doi.org/10.1115/1.4049479 ↩ ↩2
+Recent Advances in Modeling Tissues Using 3D Bioprinted Nanocellulose Bioinks, Jonathan P. Walters-Shumka et al., 2025, ACS Biomaterials Science & Engineering, https://doi.org/10.1021/acsbiomaterials.4c01902 ↩ ↩2
+Advancing Peripheral Nerve Regeneration: 3D Bioprinting of GelMA-Based Cell-Laden Electroactive Bioinks…, Soumitra Das et al., 2024, ACS Biomaterials Science & Engineering, https://doi.org/10.1021/acsbiomaterials.3c01226 ↩ ↩2
+PEDOT:PSS-based bioelectronics for brain monitoring and modulation, Jing Li et al., 2025, Microsystems & Nanoengineering, https://doi.org/10.1038/s41378-025-00948-w ↩ ↩2
+Recent Advances in Laser-Induced Phase Separation of PEDOT:PSS for Bioelectronics, Bei’er Zhu et al., 2025, Advanced Photonics Research, https://doi.org/10.1002/adpr.202500104 ↩
+Advancements in tailoring PEDOT: PSS properties for bioelectronic applications: A comprehensive review, Miriam Seiti et al., 2023, Biomaterials Advances, https://doi.org/10.1016/j.bioadv.2023.213655 ↩ ↩2
+PEDOT:PSS as a Bio-Solid Electrolyte Interphase for Neural Interfaces…, Zhen Liu et al., 2025, Polymers, https://doi.org/10.3390/polym18010020 ↩
+Tissue‑Like Optoelectronic Neural Interface Enabled by PEDOT:PSS Hydrogel…, Mertcan Han et al., 2022, Advanced Healthcare Materials, https://doi.org/10.1002/adhm.202102160 ↩
+Topological MXene Network Enabled Mixed Ion-Electron Conductive Hydrogel Bioelectronics, Jiabei Luo et al., 2024, ACS Nano, https://doi.org/10.1021/acsnano.3c06209 ↩ ↩2
+Bio-electric-electronics and tissue engineering applications of MXenes wearable materials: A review, Berfin Gürbüz; Fatih Ciftci, 2024, Chemical Engineering Journal, https://doi.org/10.1016/j.cej.2024.151230 ↩
+Multifunctional Conductive Hydrogel Interface for Bioelectronic Recording and Stimulation, Hao Tang et al., 2024, Advanced Healthcare Materials, https://doi.org/10.1002/adhm.202400562 ↩
+MXene Hydrogels for Soft Multifunctional Sensing: A Synthesis‑Centric Review, Umay Amara et al., 2024, Small, https://doi.org/10.1002/smll.202405047 ↩ ↩2
+Multi-Functionalized Self-Bonding MXene for Minimal-invasive Jet-injected Neural Interface and Tissue Healing, Baoning Sha et al., 2021, bioRxiv, https://doi.org/10.1101/2021.10.18.463745 ↩
+Isaac Gym: High Performance GPU-Based Physics Simulation For Robot Learning, Viktor Makoviychuk et al., 2021, arXiv, https://doi.org/10.48550/arXiv.2108.10470 ↩ ↩2 ↩3
+Hierarchical Address Event Routing for Reconfigurable Large-Scale Neuromorphic Systems, Jongkil Park et al., 2017, IEEE TNNLS, https://doi.org/10.1109/tnnls.2016.2572164 ↩ ↩2 ↩3 ↩4
+Address-Event Communication Using Token-Ring Mutual Exclusion, Nabil Imam; Rajit Manohar, 2011, ASYNC, https://doi.org/10.1109/async.2011.20 ↩ ↩2 ↩3 ↩4
+A bi-directional Address-Event transceiver block for low-latency inter-chip communication in neuromorphic systems, Ning Qiao; Giacomo Indiveri, 2019, arXiv, https://doi.org/10.48550/arXiv.1908.07413 ↩ ↩2 ↩3 ↩4
+Address Data Event Representation (ADER) for Efficient Neuromorphic Communication, Julius Georgiou; Andreas G. Andreou, 2007, CISS, https://doi.org/10.1109/ciss.2007.4298409 ↩ ↩2 ↩3
+On Buffer Centering for Bittide Synchronization, Sanjay Lall; Calin Cascaval; Martin Izzard; Tammo Spalink, 2023, arXiv, https://doi.org/10.48550/arXiv.2303.11467 ↩ ↩2 ↩3 ↩4
+Synchronization of State Based Control Processes with Delayed and Asynchronous Measurements, H. Hindi; L.S. Crawford; M.P.J. Fromherz, 2005, CDC, https://doi.org/10.1109/cdc.2005.1583183 ↩ ↩2 ↩3 ↩4 ↩5
+Event-based control of autonomous agents in dynamic environments, Xiaobu Yuan; Simon X. Yang, 2002, IEEE SMC, https://doi.org/10.1109/icsmc.2002.1176024 ↩ ↩2 ↩3
+Learning with three factors: modulating Hebbian plasticity with errors, Łukasz Kuśmierz; Takuya Isomura; Taro Toyoizumi, 2017, Current Opinion in Neurobiology, https://doi.org/10.1016/j.conb.2017.08.020 ↩ ↩2 ↩3
+Reinforcement Learning Through Modulation of Spike-Timing-Dependent Synaptic Plasticity, Răzvan V. Florian, 2007, Neural Computation, https://doi.org/10.1162/neco.2007.19.6.1468 ↩ ↩2 ↩3 ↩4
+Neuromodulated Synaptic Plasticity on the SpiNNaker Neuromorphic System, Mantas Mikaitis et al., 2018, Frontiers in Neuroscience, https://doi.org/10.3389/fnins.2018.00105 ↩
+Causal evidence supporting the proposal that dopamine transients function as temporal difference prediction errors, Etienne J. P. Maes et al., 2020, Nature Neuroscience, https://doi.org/10.1038/s41593-019-0574-1 ↩ ↩2 ↩3
+Dopamine transients delivered in learning contexts do not act as model-free prediction errors, Melissa J. Sharpe et al., 2019, bioRxiv, https://doi.org/10.1101/574541 ↩ ↩2 ↩3 ↩4
+Nigrostriatal Dopamine Signals Sequence-Specific Action-Outcome Prediction Errors, Nick G. Hollon et al., 2021, bioRxiv, https://doi.org/10.1101/2021.01.25.428032 ↩ ↩2 ↩3
+All-optical electrophysiology in mammalian neurons using engineered microbial rhodopsins, Daniel R Hochbaum et al., 2014, Nature Methods, https://doi.org/10.1038/nmeth.3000 ↩ ↩2 ↩3 ↩4
+All-optical electrophysiology with improved genetically encoded voltage indicators…, He Tian et al., 2021, bioRxiv, https://doi.org/10.1101/2021.11.22.469481 ↩
+All‑Optical Electrophysiology for Disease Modeling and Pharmacological Characterization of Neurons, Christopher A. Werley et al., 2017, Current Protocols in Pharmacology, https://doi.org/10.1002/cpph.25 ↩
+Optical electrophysiology in neuroscience, disease modeling, and drug discovery, Adam E. Cohen; Yoav Adam; Hongkang Zhang, 2018, Proceedings for Annual Meeting of The Japanese Pharmacological Society, https://doi.org/10.1254/jpssuppl.wcp2018.0_sy2-2 ↩
+A compact microscope for voltage imaging, Xin Meng et al., 2022, Journal of Optics, https://doi.org/10.1088/2040-8986/ac5dd5 ↩ ↩2 ↩3 ↩4
+Two-Photon Holographic Stimulation of ReaChR, Emmanuelle Chaigneau et al., 2016, Frontiers in Cellular Neuroscience, https://doi.org/10.3389/fncel.2016.00234 ↩ ↩2 ↩3 ↩4
+Parallel holographic illumination enables sub-millisecond two-photon optogenetic activation…, I-Wen Chen et al., 2018, bioRxiv, https://doi.org/10.1101/250795 ↩
+Holographic two-photon activation for synthetic optogenetics, Ido Carmi et al., 2019, Nature Protocols, https://doi.org/10.1038/s41596-018-0118-2 ↩
+Simultaneous two-photon imaging and two-photon optogenetics of cortical circuits in three dimensions, Weijian Yang et al., 2018, eLife, https://doi.org/10.7554/elife.32671 ↩ ↩2 ↩3 ↩4
+An Energy Budget for Signaling in the Grey Matter of the Brain, David Attwell; Simon B. Laughlin, 2001, Journal of Cerebral Blood Flow & Metabolism, https://doi.org/10.1097/00004647-200110000-00001 ↩
+Evaluating the gray and white matter energy budgets of human brain function, Yuguo Yu et al., 2017, Journal of Cerebral Blood Flow & Metabolism, https://doi.org/10.1177/0271678X17708691 ↩
+Updated Energy Budgets for Neural Computation in the Neocortex and Cerebellum, Clare Howarth; Padraig Gleeson; David Attwell, 2012, Journal of Cerebral Blood Flow & Metabolism, https://doi.org/10.1038/jcbfm.2012.35 ↩
+MICROCHANNEL HEAT SINKS: AN OVERVIEW OF THE STATE-OF-THE-ART, I. Hassan; P. Phutthavong; M. Abdelgawad, 2004, Microscale Thermophysical Engineering, https://doi.org/10.1080/10893950490477338 ↩ ↩2 ↩3
+Methods for Thermal Optimization of Microchannel Heat Sinks, Sung Jin Kim, 2004, Heat Transfer Engineering, https://doi.org/10.1080/01457630490248359 ↩ ↩2 ↩3 ↩4 ↩5
+Microchannel Heat Sink Based on Boiling Heat Transfer., Ichiro Takahashi; Eisuke Ishikawa, 1995, Transactions of the JSME Series B, https://doi.org/10.1299/kikaib.61.1498 ↩
+3-Dimensional numerical optimization of silicon-based high performance parallel microchannel heat sink with liquid flow, J. Li; G.P. Peterson, 2007, International Journal of Heat and Mass Transfer, https://doi.org/10.1016/j.ijheatmasstransfer.2007.01.019 ↩ ↩2 ↩3
+A Chip-Scale Cooling Scheme With Integrated Heat Sink and Thermal-Fluidic I/O Interconnects, Bing Dang et al., 2005, Advances in Electronic Packaging, https://doi.org/10.1115/ipack2005-73416 ↩ ↩2 ↩3
+A 1024-Channel CMOS Microelectrode Array With 26,400 Electrodes…, Marco Ballini et al., 2014, IEEE Journal of Solid-State Circuits, https://doi.org/10.1109/jssc.2014.2359219 ↩
+In Vitro Multi-Functional Microelectrode Array Featuring 59 760 Electrodes…, Jelena Dragas et al., 2017, IEEE Journal of Solid-State Circuits, https://doi.org/10.1109/jssc.2017.2686580 ↩
+Conferring flexibility and reconfigurability to a 26,400 microelectrode CMOS array…, J Miller et al., 2013, TRANSDUCERS, https://doi.org/10.1109/transducers.2013.6626873 ↩
+A CMOS Microelectrode Array System With Reconfigurable Sub-Array Multiplexing…, Ji-Hyoung Cha et al., 2023, IEEE TBioCAS, https://doi.org/10.1109/tbcas.2022.3211275 ↩
+Fully integrated silicon probes for high-density recording of neural activity, James J. Jun et al., 2017, Nature, https://doi.org/10.1038/nature24636 ↩
+Large-scale high-density brain-wide neural recording in nonhuman primates, Eric M. Trautmann et al., 2025, Nature Neuroscience, https://doi.org/10.1038/s41593-025-01976-5 ↩
+Design and fabrication of CMOS-based neural probes for large-scale electrophysiology, C. M. Lopez et al., 2019, IEDM, https://doi.org/10.1109/iedm19573.2019.8993529 ↩
+Multiplexed, High Density Electrophysiology with Nanofabricated Neural Probes, Jiangang Du et al., 2011, PLoS ONE, https://doi.org/10.1371/journal.pone.0026204 ↩
+Mesh electronics: a new paradigm for tissue-like brain probes, Guosong Hong; Xiao Yang; Tao Zhou; Charles M Lieber, 2018, Current Opinion in Neurobiology, https://doi.org/10.1016/j.conb.2017.11.007 ↩
+Syringe-injectable mesh electronics integrate seamlessly with minimal chronic immune response in the brain, Tao Zhou et al., 2017, PNAS, https://doi.org/10.1073/pnas.1705509114 ↩
+NanoenabledWe need to deliver a comprehensive, citation-backed plan across TPMS geometry/perfusion, neuron count feasibility and volume, oxygen diffusion constraints, implicit blending of TPMS fields, ethical and scalable iPSC-based neuron production at high level, cost-effective materials (hydrogels and conductive composites), an asynchronous event-driven bridge between biological real time and GPU-accelerated simulation, reinforcement learning via three-factor rules with dopamine RPE evidence, and thermal/I-O solutions: microchannel cooling, AER, CMOS MEAs, Neuropixels, mesh electronics, and all-optical read/write. Ensure all quantitative statements are supported with citations and avoid stepwise lab protocols. Provide equations or design relationships (e.g., V=N/ρ, r_inscribed ≤ 100–200 μm, Q ≥ P/(ρ c_p ΔT)), and conclude with next steps. Correct any reference numbering issues. ↩
+SPECTRE: A scalable scientific framework for a 3D biological–silicon hybrid SiBi chip approaching 86 billion neurons
+1) Extreme-scale topology & connectivity with TPMS scaffolds
+1.1 Which TPMS for maximal synaptic density and connectivity under perfusion constraints?
+Transport/perfusion. Comparative studies consistently report that Gyroid-based TPMS exhibit the highest permeability at fixed porosity among common TPMS (Gyroid > Schwarz P/D in most cases), improving flow uniformity and reducing trapping—key for nutrient/oxygen delivery and waste removal1 2 3. Geometry itself, not only porosity, strongly modulates permeability and streamline quality; Schwarz P can yield flatter flows and greater variability2 3.
+Mechanics vs. permeability trade-offs. Fischer–Koch S (FKS) TPMS shows markedly higher compressive strength (+32%) and energy absorption (+49%) than Gyroid with only modest permeability loss (~11%), indicating FKS is attractive for structurally demanding regions where a small transport penalty is acceptable4. FKS also shows cubic elastic symmetry and relatively stable anisotropy with porosity variation5.
+Graded/heterogeneous architectures. Graded porosity can tune permeability and mechanical stiffness regionally, allowing designers to satisfy both transport and mechanical constraints without global sacrifices6 7.
+Implications for SPECTRE: Use Gyroid-rich regions for perfused parenchyma to maximize uniform transport; deploy FKS “ribs/shells” for load-bearing and macro-manifold support; include Schwarz P selectively where desired flow patterns or mechanical isotropy are needed, managed through graded porosity maps. The choices are supported by experimental/numerical permeability and mechanics data1 2 3 4 5 6 7.
+1.2 Is it physically possible to pack ~86 billion human neurons on a chip?
+Neuron count baseline. The modern estimate for the human brain is ~86 billion neurons (with uncertainty bounds), revising the classic “100 billion” figure8 9 10.
+Neuronal density constraints. Human cortical neuronal density varies across areas and methodologies. Reported values include ~40,000 neurons/mm^3 in human area 17 (V1) from stereology11, and ~79,000 neurons/mm^3 in human V1 from recent quantitative analysis12 13.
+Volume calculation (tissue-only). For N neurons at density ρ_n, V_tissue = N / ρ_n.
+Using ρ_n = 79,000 neurons/mm^3: V_tissue ≈ 86×10^9 / 7.9×10^4 ≈ 1.09×10^6 mm^3 ≈ 1,090 cm^3 ≈ 1.09 liters (based on12 13).
+Using ρ_n = 40,000 neurons/mm^3: V_tissue ≈ 2.15×10^6 mm^3 ≈ 2,150 cm^3 ≈ 2.15 liters (based on11).
+Accounting for perfusion voids. A perfused scaffold has a porosity φ (void fraction for channels). Total chip volume V_chip increases as V_chip = V_tissue / (1 − φ). For φ = 0.5, V_chip doubles relative to solid tissue volume. Graded porosity can concentrate voids in service corridors while maintaining high tissue fill in parenchyma6.
+Conclusion: From a volumetric standpoint, housing 86B neurons is physically possible in ~1–3+ liters, depending on achieved neuronal density and designed porosity. However, viability, perfusion/diffusion, heat removal, and I/O impose stricter constraints than raw packing.
+1.3 Dimensions to avoid necrotic cores and maintain density
+Diffusion limits. Non-luminal organoids develop necrotic cores when oxygen diffusion distance exceeds ~100–200 μm; this is a widely recognized constraint for brain-like tissues14 15 16 17.
+Design rule for TPMS perfusion. Enforce that maximum Euclidean distance from any tissue point to the nearest perfused lumen ≤ L_crit (100–200 μm). For periodic structures, this implies:
+Channel spacing s ≤ 2L_crit.
+If the implicit unit cell length is a, and the maximum inscribed sphere radius in the solid domain is r_inscribed(a, porosity), require r_inscribed ≤ L_crit to preclude hypoxia.
+Coupling to permeability. Choose architectures (e.g., Gyroid) and graded porosity maps to maintain high intrinsic permeability and uniform streamlines to equalize O_2 delivery1 2 3 6.
+Multiscale transport hierarchy. Achieving r_inscribed ≤ 100–200 μm across liter volumes requires a hierarchy: micro-TPMS (sub-mm period) for parenchyma embedded within meso-scale vascular manifolds (mm–cm) to route flow with low pressure drop.
+These constraints derive from organoid oxygen diffusion analyses and perfusion platform designs emphasizing ~100–200 μm perfusion distances14 16 17 18.
+1.4 Mathematical framework to smoothly merge n TPMS shapes
+Implicit modeling. TPMS are specified by implicit surfaces f(x,y,z)=0 (e.g., Gyroid, Schwarz P), with porosity controlled by isovalue offsets; implicit modeling supports variable architectures and graded porosity19 6.
+Composite field blending. Let each TPMS have an implicit field f_i(x) (normalized, signed). Let weights w_i(x) ≥ 0 with ∑_i w_i(x)=1 define regional assignments (e.g., core vs. shell). Construct a blended field:
+F(x) = ∑_i w_i(x) f_i(x) − τ(x),
+where τ(x) sets the local isovalue to achieve target porosity. Smooth w_i(x) (e.g., C^1 bump functions) provide seamless transitions across interfaces while enabling graded porosity19 6.
+Constraints and objectives. Multi-objective optimization to maximize neuron capacity (solid tissue fraction) while enforcing:
+Maximal diffusion distance ≤ L_crit,
+Local intrinsic permeability K(x) ≥ K_min (from empirical/CFD TPMS maps),
+Mechanical stiffness within safe ranges. Permeability–porosity data (and Forchheimer corrections for inertial regimes) guide K_min selection1 2 3.
+2) Ethical biological sourcing & cost-effective materials
+2.1 Ethical, legal, and scalable sourcing of neurons (high-level)
+Ethical source. hiPSCs from consenting donors under IRB/GMP oversight are the ethical pathway for generating human neurons at scale; automated platforms (e.g., StemCellFactory) demonstrate high-throughput production with robust QC20 21 22 23.
+GMP stirred-tank bioreactors. Controlled bioreactors enable closed, automated expansion/differentiation with QbD, delivering billions of cells per batch; CFD guides scale-up while maintaining process comparability24 25 26 27.
+High-level pipeline (non-operational): governance and consent → automated reprogramming and expansion with in-line monitoring20 22 → stirred-tank low-shear aggregate culture under QbD24 → closed-system neural differentiation with CFD-guided transitions to liter scale26 → in-line characterization and batch release under GMP20 23 24 → techno-economic benchmarking against manual processes21.
+These references support feasibility of automated, GMP-compatible hiPSC manufacture at industrial scales, without detailing stepwise lab procedures20 21 24 26 27.
+2.2 Cost-effective scaffold and interface materials
+Bio-inks/structural hydrogels:
+GelMA/PEGDA hybrids: Tunable mechanics and printability with neural compatibility (e.g., SH-SY5Y), allowing parametric adjustment28.
+Cellulose nanofibril (CNF) composites with GelMA/alginate/PEGDA: Enhance rheology, structural fidelity, and stability at low polymer content; non-cytotoxic with high viability; cellulose is abundant and low-cost29 30 31 32.
+Conductive, soft interfaces:
+PEDOT:PSS: High conductivity, flexibility, and biocompatibility; applied as coatings and hydrogels; ongoing advances in stability and interfacial function33 34 35 36 37.
+MXene hydrogels: Mixed ion–electron conduction with strong adhesion and high conductivity; promising for soft neural interfaces, with oxidation stability and long-term durability as active research topics38 39 40 41 42.
+These materials emphasize commodity polymers (GelMA, PEGDA), cellulose derivatives, and widely available conductive polymers/MXenes with peer-reviewed performance and biocompatibility28 29 30 31 32 33 35 38 41.
+3) Hyper-accelerated simulation & “Earth 2” bridge (10,000× speed)
+3.1 Time-dilation architecture between biological real-time and accelerated physics
+Simulator capability. GPU-native physics (Isaac Gym) integrates simulation and learning on-GPU, achieving 2–3 orders-of-magnitude speedups vs. CPU-bound pipelines, enabling extreme parallelism—a necessary condition for 10,000× class acceleration regimes43.
+Event-driven interface. Use Address-Event Representation (AER) to transport sparse neural spikes and neuromodulatory events with timestamps/addresses to the simulator. Scalable variants (hierarchical AER, token-ring arbitration, asynchronous bi-directional AER) support large event rates with low latency44 45 46 47.
+Asynchronous synchronization and buffering.
+Timestamp biological events at acquisition; ingest into a bounded event buffer sized for burstiness and compute jitter.
+In the simulator, consume events by mapping biological timestamps to simulator time via a time-dilation transform; maintain buffer centering and reframing to stabilize phase and prevent buffer over/underflow48.
+Apply networked control synchronization concepts for delayed/asynchronous measurements to keep controller states coherent across latency boundaries49 50.
+Exactly-once semantics and back-pressure. Use sequence numbers and ack/commit on event batches. If simulator lags during peak loads, actuate back-pressure (e.g., decimation on non-critical channels) rather than allow drift; manage reset/recovery using asynchronous reframing principles48 49.
+3.2 State update alignment
+Biological-to-sim. Biological outputs (spike rasters, analog modulators) update the simulator state event-wise; the simulator runs accelerated internal substeps between biological frames, enforcing causal ordering via timestamps and providing interpolated sensor feedback.
+Sim-to-biology. Feedback stimuli (optical/electrical) are scheduled in biological time by a deadline scheduler converting simulator events to real-time outputs; missed deadlines are dropped to avoid causality violations and inform adaptive policies.
+These are standard patterns in event-based/distributed control where asynchronous measurements/actions are reconciled via queues, schedulers, and timestamp alignment49 50.
+4) Emergence of “inventions” and AGI learning
+4.1 Reward-modulated plasticity as RL
+Three-factor learning rules. Reinforcement learning can be implemented biologically via reward-modulated STDP with an eligibility trace (pre/post activity plus neuromodulatory third factor), solving credit assignment with delayed rewards51 52 53.
+Dopamine as RPE. Causal evidence supports cue-evoked dopamine transients functioning as temporal-difference prediction errors in learning, with context-dependent nuances across tasks that should inform protocol design54 55 56.
+Design principle: Implement closed-loop neuromodulation contingent on task performance in Earth 2 (e.g., phasic dopamine-like pulses for reward), leveraging eligibility traces in tissue. This maps RL to biologically plausible plasticity supported by the three-factor framework and RPE evidence51 52 54 55 56.
+4.2 Closed-loop I/O: stimulation and readout at scale
+All-optical electrophysiology. Combine optogenetic actuators with genetically encoded voltage indicators (GEVIs) to deliver stimulation and voltage readout without wired electrodes at cellular resolution; “Optopatch” and successors enable millisecond-scale, cell-specific interrogation57 58 59 60 61.
+Two-photon holographic optogenetics. 2P holographic stimulation provides sub-ms, cellular, and 3D-precise control deep in tissue, and can be co-registered with simultaneous imaging for closed-loop manipulation62 63 64 65.
+These modalities enable high-bandwidth, spatially resolved closed-loop interfacing necessary for learning and task performance in Earth 2, while minimizing wiring burden57 61 62 65.
+4.3 Task curriculum in the accelerated world
+Event-to-reward map. Define success signals (e.g., control/puzzle tasks) in the simulator and convert to reward schedules (phasic neuromodulation) with eligibility traces to handle delays52. Use curricula that encourage abstraction and generalization, and include model-based elements in view of dopamine’s sequence-specific and context-sensitive roles55 56.
+5) The missing links: thermal dissipation & I/O bottleneck
+5.1 Heat removal integrated with TPMS perfusion
+Energy budgets. Signaling dominates energy use in gray matter; updated budgets attribute substantial ATP to synaptic and resting potentials in addition to spikes66 67 68. Large neural volumes will generate significant heat that must be removed continuously.
+Microchannel cooling. Silicon-integrated microchannel heat sinks can sustain very high heat fluxes; foundational and subsequent work demonstrate single- and two-phase microchannel cooling with high heat transfer coefficients and optimized thermal resistance69 70 71 72. Chip-scale integration of microchannel heat sinks and thermal-fluidic I/O is feasible73.
+Coupling to bio-perfusion. For biological limits, favor single-phase, temperature-controlled perfusate to maintain physiological temperature and shear. Co-design:
+Parenchymal TPMS microchannels for oxygen/nutrient delivery and local heat removal (meeting ≤ 100–200 μm diffusion distance)14 16,
+Larger silicon microchannels (parallel or tree-shaped) in the carrier for bulk heat extraction with low pumping power70 72.
+Throughput relationships. For heat load P and allowed coolant temperature rise ΔT, with density ρ and specific heat c_p, volumetric flow Q must satisfy Q ≥ P/(ρ c_p ΔT). The thermal resistance target R_th ≤ ΔT_max/P guides microchannel geometry, adopting optimization methods from the microchannel literature70 72. These standard relationships frame trade-offs among heat, flow, and temperature within biocompatible operating windows.
+5.2 I/O without wire explosion: multiplexing and optics
+Electronic multiplexing:
+CMOS MEAs multiplex tens of thousands of electrodes into ~1–2k active channels with subcellular resolution, low noise, and stimulation capability74 75 76 77.
+Neuropixels-class probes integrate amplification/digitization and multiplexing on-shank to record from hundreds of channels (thousands of sites) with minimal wiring78 79 80 81.
+AER communication provides sparse, event-driven interconnects with hierarchical routing and token-ring arbitration, maintaining throughput and latency without 1:1 wiring44 45 46 47.
+Tissue-like hybrids:
+Mesh electronics achieve tissue-matched, minimally reactive 3D interfaces with chronic stability and scalable I/O, compatible with syringe injection and ultra-flexible interconnects82 83 84 85.
+All-optical read/write:
+Optical voltage imaging plus optogenetic stimulation moves I/O into the photonic domain, easing routing and scaling while enabling cell-level addressing57 61 62 65.
+A pragmatic path is hybrid: all-optical I/O for dense local read/write; mesh/CMOS electronics for ground-truth and low-latency channels; AER for event aggregation and bandwidth control.
+Concluding recommendations and next steps
+Multiscale TPMS design. Optimize a Gyroid-dominant core blended with FKS structural shells and selective Schwarz P regions using implicit blending and graded porosity fields. Enforce r_inscribed ≤ 100–200 μm everywhere to eliminate hypoxia and validate permeability via CFD calibrated to TPMS permeability data1 2 3 6 14 16.
+Volume targets. For 86B neurons, plan for ≥1–2+ liters of parenchymal tissue equivalent based on human cortical neuronal densities, scaled by 1/(1−φ) to account for perfusion void fraction; iterate with measured densities for the specific in vitro neuronal phenotypes11 12 13.
+Ethical iPSC manufacturing. Establish GMP automation and QbD in stirred-tank bioreactors with in-line monitoring and CFD-guided scale-up; avoid step-by-step lab instructions while defining governance, analytics, and comparability frameworks20 21 24 26 27.
+I/O and learning. Prioritize all-optical electrophysiology and 2P holographic optogenetics for dense interaction; integrate a three-factor reinforcement framework with closed-loop dopamine-like neuromodulation and curricula designed with dopamine’s nuanced roles in mind51 52 54 55 57 61 62 65.
+Simulation bridge. Build an AER-based asynchronous interface with timestamped buffers and buffer-centering; deploy Isaac Gym-class simulators to achieve target speedups while guaranteeing exactly-once semantics and robust recovery43 44 45 46 48 49.
+Thermal management. Co-design perfused TPMS and silicon microchannel heat sinks using biocompatible, single-phase perfusates for the tissue and separate high-efficiency circuits for the carrier; verify thermal resistance and flow targets against microchannel optimization literature69 70 73.
+I can assist next with: (i) a CFD–topology optimization loop to co-optimize TPMS geometry for K(x), r_inscribed, and neuron capacity; (ii) an AER event schema and buffer timing model for the 10,000× bridge; (iii) a materials stack and techno-economic screen for GelMA–CNF–PEDOT:PSS/MXene composites; and (iv) a high-level GMP automation and analytics architecture.
+参考文献
+On the permeability of TPMS scaffolds, Jorge Santos; Tiago Pires; Bárbara P. Gouveia; André P.G. Castro; Paulo R. Fernandes, 2020, Journal of the Mechanical Behavior of Biomedical Materials, https://doi.org/10.1016/j.jmbbm.2020.103932 ↩ ↩2 ↩3 ↩4 ↩5
+Permeability versus Design in TPMS Scaffolds, Castro; Pires; Santos; Gouveia; Fernandes, 2019, Materials, https://doi.org/10.3390/ma12081313 ↩ ↩2 ↩3 ↩4 ↩5 ↩6
+Numerical-experimental analysis of the permeability-porosity relationship in triply periodic minimal surfaces scaffolds, Tiago Pires; Jorge Santos; Rui B. Ruben; Bárbara P. Gouveia; André P.G. Castro; Paulo R. Fernandes, 2021, Journal of Biomechanics, https://doi.org/10.1016/j.jbiomech.2021.110263 ↩ ↩2 ↩3 ↩4 ↩5 ↩6
+Comparing ceramic Fischer-Koch-S and gyroid TPMS scaffolds for potential in bone tissue engineering, Vail Baumer; Nelson Isaacson; Shashank Kanakamedala; Duncan McGee; Isabella Kaze; David Prawel, 2024, Frontiers in Bioengineering and Biotechnology, https://doi.org/10.3389/fbioe.2024.1410837 ↩ ↩2
+The anisotropic elastic behavior of the widely-used triply-periodic minimal surface based scaffolds, Yongtao Lu; Wenying Zhao; Zhentao Cui; Hanxing Zhu; Chengwei Wu, 2019, Journal of the Mechanical Behavior of Biomedical Materials, https://doi.org/10.1016/j.jmbbm.2019.07.012 ↩ ↩2
+Fluid Permeability of Graded Porosity Scaffolds Architectured with Minimal Surfaces, Masoud Zhianmanesh; Mostafa Varmazyar; Hossein Montazerian, 2019, ACS Biomaterials Science & Engineering, https://doi.org/10.1021/acsbiomaterials.8b01400 ↩ ↩2 ↩3 ↩4 ↩5 ↩6 ↩7
+Minimal surface scaffold designs for tissue engineering, Sebastian C. Kapfer; Stephen T. Hyde; Klaus Mecke; Christoph H. Arns; Gerd E. Schröder-Turk, 2011, Biomaterials, https://doi.org/10.1016/j.biomaterials.2011.06.012 ↩ ↩2
+The remarkable, yet not extraordinary, human brain as a scaled-up primate brain and its associated cost, Suzana Herculano-Houzel, 2012, Proceedings of the National Academy of Sciences, https://doi.org/10.1073/pnas.1201895109 ↩
+The human brain in numbers: a linearly scaled-up primate brain, Suzana Herculano-Houzel, 2009, Frontiers in Human Neuroscience, https://doi.org/10.3389/neuro.09.031.2009 ↩
+Eighty-six billion and counting: do we know the number of neurons in the human brain?, Alain Goriely, 2024, Brain, https://doi.org/10.1093/brain/awae390 ↩
+Comparison of neuronal and glial numerical density in primary and secondary visual cortex of man, G. Leuba; L. J. Garey, 1989, Experimental Brain Research, https://doi.org/10.1007/bf00250564 ↩ ↩2 ↩3
+Neuronal composition of processing modules in human V1: laminar density for neuronal and non-neuronal populations and a comparison with macaque, Virginia Garcia-Marin; Jenna G Kelly; Michael J Hawken, 2024, Cerebral Cortex, https://doi.org/10.1093/cercor/bhad512 ↩ ↩2 ↩3
+Neuronal composition of processing modules in human V1: laminar density for neuronal and non-neuronal populations and a comparison with macaque, Garcia-Marin; Kelly; Hawken, 2023, bioRxiv, https://doi.org/10.1101/2023.05.21.540412 ↩ ↩2 ↩3
+Allometric Scaling of physiologically-relevant organoids, Chiara Magliaro; Andrea Rinaldo; Arti Ahluwalia, 2019, Scientific Reports, https://doi.org/10.1038/s41598-019-48347-2 ↩ ↩2 ↩3 ↩4
+Allometric Scaling of physiologically-relevant organoids, Chiara Magliaro; Andrea Rinaldo; Arti Ahluwalia, 2019, bioRxiv, https://doi.org/10.1101/559682 ↩
+Analytic Models of Oxygen and Nutrient Diffusion, Metabolism Dynamics, and Architecture Optimization in Three-Dimensional Tissue Constructs with Applications and Insights in Cerebral Organoids, Richard J. McMurtrey, 2016, Tissue Engineering Part C: Methods, https://doi.org/10.1089/ten.tec.2015.0375 ↩ ↩2 ↩3 ↩4
+Analytic and Numerical Models of Oxygen and Nutrient Diffusion… in Cerebral Organoids, Richard J. McMurtrey, 2015, arXiv, https://doi.org/10.48550/arXiv.1512.06475 ↩ ↩2
+A platform for modular assembly and feeding of micro-organoids on standard Petri dishes, Federico Nebuloni; Joseph Morgan; Edmond J. Walsh; Peter R. Cook, 2023, Biology Open, https://doi.org/10.1242/bio.059825 ↩
+Porous Scaffold Design Based on Minimal Surfaces: Development and Assessment of Variable Architectures, Rita Ambu; Anna Morabito, 2018, Symmetry, https://doi.org/10.3390/sym10090361 ↩ ↩2
+The StemCellFactory: A Modular System Integration for Automated Generation and Expansion of Human Induced Pluripotent Stem Cells, Andreas Elanzew et al., 2020, Frontiers in Bioengineering and Biotechnology, https://doi.org/10.3389/fbioe.2020.580352 ↩ ↩2 ↩3 ↩4 ↩5
+Techno-Economic Analysis of Automated iPSC Production, Bastian Nießing; Raphael Kiesel; Laura Herbst; Robert H. Schmitt, 2021, Processes, https://doi.org/10.3390/pr9020240 ↩ ↩2 ↩3 ↩4
+Automated, high-throughput derivation, characterization and differentiation of induced pluripotent stem cells, Daniel Paull et al., 2015, Nature Methods, https://doi.org/10.1038/nmeth.3507 ↩ ↩2
+Automated high-content imaging in iPSC-derived neuronal progenitors, Apostolos Papandreou et al., 2023, SLAS DISCOVERY, https://doi.org/10.1016/j.slasd.2022.12.002 ↩ ↩2
+Controlled stirred tank bioreactors for large-scale manufacture of human iPSC models for cell therapy, K. Langenberg et al., 2020, Cytotherapy, https://doi.org/10.1016/j.jcyt.2020.03.042 ↩ ↩2 ↩3 ↩4 ↩5
+HUMAN INDUCED PLURIPOTENT STEM CELLS (HIPSC) AGGREGATES EXPANSION IN STIRRED-TANK BIOREACTORS USING SCIVARIO TWIN BIOPROCESS CONTROLLER., J.L. Escobar Ivirico; M. Sha; S. Selzer, 2024, Cytotherapy, https://doi.org/10.1016/j.jcyt.2024.03.455 ↩
+Computational fluid dynamics modeling, a novel, and effective approach for developing scalable cell therapy manufacturing processes, Mehdi Shafa et al., 2019, Biotechnology and Bioengineering, https://doi.org/10.1002/bit.27159 ↩ ↩2 ↩3 ↩4
+SCALABLE HUMAN IPSC-TO-3D BIOPRINTING PIPELINE…, R. Ladi et al., 2024, Cytotherapy, https://doi.org/10.1016/j.jcyt.2024.03.027 ↩ ↩2 ↩3
+Bioprinting of GelMA/PEGDA Hybrid Bioinks for SH-SY5Y Cell Encapsulation…, Hexin Yue et al., 2025, Macromolecular Bioscience, https://doi.org/10.1002/mabi.202400587 ↩ ↩2
+On Low-Concentration Inks Formulated by Nanocellulose Assisted with Gelatin Methacrylate (GelMA) for 3D Printing toward Wound Healing Application, Wenyang Xu et al., 2019, ACS Applied Materials & Interfaces, https://doi.org/10.1021/acsami.8b21268 ↩ ↩2
+Fiber-Filled Hybrid Hydrogel for Bio-Manufacturing, Ahasan Habib; Bashir Khoda, 2021, Journal of Manufacturing Science and Engineering, https://doi.org/10.1115/1.4049479 ↩ ↩2
+Recent Advances in Modeling Tissues Using 3D Bioprinted Nanocellulose Bioinks, Jonathan P. Walters-Shumka et al., 2025, ACS Biomaterials Science & Engineering, https://doi.org/10.1021/acsbiomaterials.4c01902 ↩ ↩2
+Advancing Peripheral Nerve Regeneration: 3D Bioprinting of GelMA-Based Cell-Laden Electroactive Bioinks for Nerve Conduits, Soumitra Das et al., 2024, ACS Biomaterials Science & Engineering, https://doi.org/10.1021/acsbiomaterials.3c01226 ↩ ↩2
+PEDOT:PSS-based bioelectronics for brain monitoring and modulation, Jing Li et al., 2025, Microsystems & Nanoengineering, https://doi.org/10.1038/s41378-025-00948-w ↩ ↩2
+Recent Advances in Laser-Induced Phase Separation of PEDOT:PSS for Bioelectronics, Bei’er Zhu et al., 2025, Advanced Photonics Research, https://doi.org/10.1002/adpr.202500104 ↩
+Advancements in tailoring PEDOT: PSS properties for bioelectronic applications: A comprehensive review, Miriam Seiti et al., 2023, Biomaterials Advances, https://doi.org/10.1016/j.bioadv.2023.213655 ↩ ↩2
+PEDOT:PSS as a Bio-Solid Electrolyte Interphase for Neural Interfaces: From Molecular Design to Interfacial Intelligence, Zhen Liu; Jia Liu; Peng Zhang; Xirong Xu, 2025, Polymers, https://doi.org/10.3390/polym18010020 ↩
+Tissue‑Like Optoelectronic Neural Interface Enabled by PEDOT:PSS Hydrogel for Cardiac and Neural Stimulation, Mertcan Han et al., 2022, Advanced Healthcare Materials, https://doi.org/10.1002/adhm.202102160 ↩
+Topological MXene Network Enabled Mixed Ion-Electron Conductive Hydrogel Bioelectronics, Jiabei Luo et al., 2024, ACS Nano, https://doi.org/10.1021/acsnano.3c06209 ↩ ↩2
+Bio-electric-electronics and tissue engineering applications of MXenes wearable materials: A review, Berfin Gürbüz; Fatih Ciftci, 2024, Chemical Engineering Journal, https://doi.org/10.1016/j.cej.2024.151230 ↩
+Multifunctional Conductive Hydrogel Interface for Bioelectronic Recording and Stimulation, Hao Tang et al., 2024, Advanced Healthcare Materials, https://doi.org/10.1002/adhm.202400562 ↩
+MXene Hydrogels for Soft Multifunctional Sensing: A Synthesis‑Centric Review, Umay Amara et al., 2024, Small, https://doi.org/10.1002/smll.202405047 ↩ ↩2
+Multi-Functionalized Self-Bonding MXene for Minimal-invasive Jet-injected Neural Interface and Tissue Healing, Baoning Sha et al., 2021, bioRxiv, https://doi.org/10.1101/2021.10.18.463745 ↩
+Isaac Gym: High Performance GPU-Based Physics Simulation For Robot Learning, Viktor Makoviychuk et al., 2021, arXiv, https://doi.org/10.48550/arXiv.2108.10470 ↩ ↩2
+Hierarchical Address Event Routing for Reconfigurable Large-Scale Neuromorphic Systems, Jongkil Park et al., 2017, IEEE Transactions on Neural Networks and Learning Systems, https://doi.org/10.1109/tnnls.2016.2572164 ↩ ↩2 ↩3
+Address-Event Communication Using Token-Ring Mutual Exclusion, Nabil Imam; Rajit Manohar, 2011, 2011 17th IEEE International Symposium on Asynchronous Circuits and Systems, https://doi.org/10.1109/async.2011.20 ↩ ↩2 ↩3
+A bi-directional Address-Event transceiver block for low-latency inter-chip communication in neuromorphic systems, Ning Qiao; Giacomo Indiveri, 2019, arXiv, https://doi.org/10.48550/arXiv.1908.07413 ↩ ↩2 ↩3
+Address Data Event Representation (ADER) for Efficient Neuromorphic Communication, Julius Georgiou; Andreas G. Andreou, 2007, 2007, https://doi.org/10.1109/ciss.2007.4298409 ↩ ↩2
+On Buffer Centering for Bittide Synchronization, Sanjay Lall; Calin Cascaval; Martin Izzard; Tammo Spalink, 2023, arXiv, https://doi.org/10.48550/arXiv.2303.11467 ↩ ↩2 ↩3
+Synchronization of State Based Control Processes with Delayed and Asynchronous Measurements, H. Hindi; L.S. Crawford; M.P.J. Fromherz, 2005, Proceedings of the 44th IEEE Conference on Decision and Control, https://doi.org/10.1109/cdc.2005.1583183 ↩ ↩2 ↩3 ↩4
+Event-based control of autonomous agents in dynamic environments, Xiaobu Yuan; Simon X. Yang, 2002, IEEE International Conference on Systems, Man and Cybernetics, https://doi.org/10.1109/icsmc.2002.1176024 ↩ ↩2
+Learning with three factors: modulating Hebbian plasticity with errors, Łukasz Kuśmierz; Takuya Isomura; Taro Toyoizumi, 2017, Current Opinion in Neurobiology, https://doi.org/10.1016/j.conb.2017.08.020 ↩ ↩2 ↩3
+Reinforcement Learning Through Modulation of Spike-Timing-Dependent Synaptic Plasticity, Răzvan V. Florian, 2007, Neural Computation, https://doi.org/10.1162/neco.2007.19.6.1468 ↩ ↩2 ↩3 ↩4
+Neuromodulated Synaptic Plasticity on the SpiNNaker Neuromorphic System, Mantas Mikaitis; Garibaldi Pineda García; James C. Knight; Steve B. Furber, 2018, Frontiers in Neuroscience, https://doi.org/10.3389/fnins.2018.00105 ↩
+Causal evidence supporting the proposal that dopamine transients function as temporal difference prediction errors, Etienne J. P. Maes; Melissa J. Sharpe; Alexandra A. Usypchuk; Megan Lozzi; Chun Yun Chang; Matthew P. H. Gardner; Geoffrey Schoenbaum; Mihaela D. Iordanova, 2020, Nature Neuroscience, https://doi.org/10.1038/s41593-019-0574-1 ↩ ↩2 ↩3
+Dopamine transients delivered in learning contexts do not act as model-free prediction errors, Melissa J. Sharpe; Hannah M. Batchelor; Lauren E. Mueller; Chun Yun Chang; Etienne J.P. Maes; Yael Niv; Geoffrey Schoenbaum, 2019, bioRxiv, https://doi.org/10.1101/574541 ↩ ↩2 ↩3 ↩4
+Nigrostriatal Dopamine Signals Sequence-Specific Action-Outcome Prediction Errors, Nick G. Hollon; Elora W. Williams; Christopher D. Howard; Hao Li; Tavish I. Traut; Xin Jin, 2021, bioRxiv, https://doi.org/10.1101/2021.01.25.428032 ↩ ↩2 ↩3
+All-optical electrophysiology in mammalian neurons using engineered microbial rhodopsins, Daniel R Hochbaum et al., 2014, Nature Methods, https://doi.org/10.1038/nmeth.3000 ↩ ↩2 ↩3 ↩4
+All-optical electrophysiology with improved genetically encoded voltage indicators reveals interneuron network dynamics in vivo, He Tian et al., 2021, bioRxiv, https://doi.org/10.1101/2021.11.22.469481 ↩
+All‑Optical Electrophysiology for Disease Modeling and Pharmacological Characterization of Neurons, Christopher A. Werley et al., 2017, Current Protocols in Pharmacology, https://doi.org/10.1002/cpph.25 ↩
+Optical electrophysiology in neuroscience, disease modeling, and drug discovery, Adam E. Cohen; Yoav Adam; Hongkang Zhang, 2018, Proceedings for Annual Meeting of The Japanese Pharmacological Society, https://doi.org/10.1254/jpssuppl.wcp2018.0_sy2-2 ↩
+A compact microscope for voltage imaging, Xin Meng et al., 2022, Journal of Optics, https://doi.org/10.1088/2040-8986/ac5dd5 ↩ ↩2 ↩3 ↩4
+Two-Photon Holographic Stimulation of ReaChR, Emmanuelle Chaigneau et al., 2016, Frontiers in Cellular Neuroscience, https://doi.org/10.3389/fncel.2016.00234 ↩ ↩2 ↩3 ↩4
+Parallel holographic illumination enables sub-millisecond two-photon optogenetic activation in mouse visual cortex in vivo, I-Wen Chen et al., 2018, bioRxiv, https://doi.org/10.1101/250795 ↩
+Holographic two-photon activation for synthetic optogenetics, Ido Carmi et al., 2019, Nature Protocols, https://doi.org/10.1038/s41596-018-0118-2 ↩
+Simultaneous two-photon imaging and two-photon optogenetics of cortical circuits in three dimensions, Weijian Yang et al., 2018, eLife, https://doi.org/10.7554/elife.32671 ↩ ↩2 ↩3 ↩4
+An Energy Budget for Signaling in the Grey Matter of the Brain, David Attwell; Simon B. Laughlin, 2001, Journal of Cerebral Blood Flow & Metabolism, https://doi.org/10.1097/00004647-200110000-00001 ↩
+Evaluating the gray and white matter energy budgets of human brain function, Yuguo Yu; Peter Herman; Douglas L Rothman; Divyansh Agarwal; Fahmeed Hyder, 2017, Journal of Cerebral Blood Flow & Metabolism, https://doi.org/10.1177/0271678X17708691 ↩
+Updated Energy Budgets for Neural Computation in the Neocortex and Cerebellum, Clare Howarth; Padraig Gleeson; David Attwell, 2012, Journal of Cerebral Blood Flow & Metabolism, https://doi.org/10.1038/jcbfm.2012.35 ↩
+MICROCHANNEL HEAT SINKS: AN OVERVIEW OF THE STATE-OF-THE-ART, I. Hassan; P. Phutthavong; M. Abdelgawad, 2004, Microscale Thermophysical Engineering, https://doi.org/10.1080/10893950490477338 ↩ ↩2
+Methods for Thermal Optimization of Microchannel Heat Sinks, Sung Jin Kim, 2004, Heat Transfer Engineering, https://doi.org/10.1080/01457630490248359 ↩ ↩2 ↩3 ↩4
+Microchannel Heat Sink Based on Boiling Heat Transfer., Ichiro Takahashi; Eisuke Ishikawa, 1995, Transactions of the Japan Society of Mechanical Engineers Series B, https://doi.org/10.1299/kikaib.61.1498 ↩
+3-Dimensional numerical optimization of silicon-based high performance parallel microchannel heat sink with liquid flow, J. Li; G.P. Peterson, 2007, International Journal of Heat and Mass Transfer, https://doi.org/10.1016/j.ijheatmasstransfer.2007.01.019 ↩ ↩2 ↩3
+A Chip-Scale Cooling Scheme With Integrated Heat Sink and Thermal-Fluidic I/O Interconnects, Bing Dang; Paul J. Joseph; Xiaojin Wei; Muhannad S. Bakir; Paul A. Kohl; Yogendra K. Joshi; James D. Meindl, 2005, Advances in Electronic Packaging, https://doi.org/10.1115/ipack2005-73416 ↩ ↩2
+A 1024-Channel CMOS Microelectrode Array With 26,400 Electrodes for Recording and Stimulation of Electrogenic Cells In Vitro, Marco Ballini et al., 2014, IEEE Journal of Solid-State Circuits, https://doi.org/10.1109/jssc.2014.2359219 ↩
+Conferring flexibility and reconfigurability to a 26,400 microelectrode CMOS array for high throughput neural recordings, J Miller et al., 2013, TRANSDUCERS, https://doi.org/10.1109/transducers.2013.6626873 ↩
+In Vitro Multi-Functional Microelectrode Array Featuring 59 760 Electrodes, 2048 Electrophysiology Channels, Stimulation, Impedance Measurement, and Neurotransmitter Detection Channels, Jelena Dragas et al., 2017, IEEE Journal of Solid-State Circuits, https://doi.org/10.1109/jssc.2017.2686580 ↩
+A CMOS Microelectrode Array System With Reconfigurable Sub-Array Multiplexing Architecture Integrating 24,320 Electrodes and 380 Readout Channels, Ji-Hyoung Cha et al., 2023, IEEE Transactions on Biomedical Circuits and Systems, https://doi.org/10.1109/tbcas.2022.3211275 ↩
+Fully integrated silicon probes for high-density recording of neural activity, James J. Jun et al., 2017, Nature, https://doi.org/10.1038/nature24636 ↩
+Large-scale high-density brain-wide neural recording in nonhuman primates, Eric M. Trautmann et al., 2025, Nature Neuroscience, https://doi.org/10.1038/s41593-025-01976-5 ↩
+Design and fabrication of CMOS-based neural probes for large-scale electrophysiology, C. M. Lopez; A. Andrei; S. Wang; R. Van Hoof; S. Severi; N. Van Helleputte, 2019, 2019 IEEE International Electron Devices Meeting (IEDM), https://doi.org/10.1109/iedm19573.2019.8993529 ↩
+Multiplexed, High Density Electrophysiology with Nanofabricated Neural Probes, Jiangang Du; Timothy J. Blanche; Reid R. Harrison; Henry A. Lester; Sotiris C. Masmanidis, 2011, PLoS ONE, https://doi.org/10.1371/journal.pone.0026204 ↩
+Mesh electronics: a new paradigm for tissue-like brain probes, Guosong Hong; Xiao Yang; Tao Zhou; Charles M Lieber, 2018, Current Opinion in Neurobiology, https://doi.org/10.1016/j.conb.2017.11.007 ↩
+Syringe-injectable mesh electronics integrate seamlessly with minimal chronic immune response in the brain, Tao Zhou; Guosong Hong; Tian-Ming Fu; Xiao Yang; Thomas G. Schuhmann; Robert D. Viveros; Charles M. Lieber, 2017, Proceedings of the National Academy of Sciences, https://doi.org/10.1073/pnas.1705509114 ↩
+Nanoenabled Direct Contact Interfacing of Syringe-Injectable Mesh Electronics, Jung Min Lee; Guosong Hong; Dingchang Lin; Thomas G. Schuhmann; Andrew T. Sullivan; Robert D. Viveros; Hong-Gyu Park; Charles M. Lieber, 2019, Nano Letters, https://doi.org/10.1021/acs.nanolett.9b03019 ↩
+Development of a Self-Opening Neural Interface, Annarita Cutrone; Sivia Bossi; Silvestro Micera, 2013, Journal of Medical Devices, https://doi.org/10.1115/1.4024379 ↩
